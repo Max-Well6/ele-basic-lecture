@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 时代计算机基础讲义 · 总目录</title>
+<style>
+:root {
+  --bg: #f7f8fa; --panel: #ffffff; --text: #24292f; --muted: #57606a;
+  --accent: #0969da; --accent2: #8250df; --border: #d0d7de;
+  --code-bg: #f3f5f7; --inline-code: #b3003c; --hl: #eaf1fb;
+  --topbar: linear-gradient(90deg, #0b2545, #13315c 60%, #1d4e89);
+  --sidebar-w: 300px; --shadow: rgba(9,105,218,.12);
+}
+html[data-theme="dark"] {
+  --bg: #0d1117; --panel: #161b22; --text: #e6edf3; --muted: #9198a1;
+  --accent: #58a6ff; --accent2: #bc8cff; --border: #30363d;
+  --code-bg: #1c2128; --inline-code: #ff7b9c; --hl: #1c2b45;
+  --topbar: linear-gradient(90deg, #010409, #0d1117 60%, #161b22);
+  --shadow: rgba(0,0,0,.5);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+  line-height: 1.75; font-size: 16px;
+  transition: background .2s, color .2s;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ---------- 阅读进度条 ---------- */
+#progress {
+  position: fixed; top: 0; left: 0; height: 3px; width: 0;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  z-index: 200; transition: width .1s linear;
+}
+
+/* ---------- 顶栏 ---------- */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; height: 52px; z-index: 100;
+  background: var(--topbar);
+  color: #fff; display: flex; align-items: center; padding: 0 16px; gap: 14px;
+  box-shadow: 0 1px 6px rgba(0,0,0,.25);
+}
+.topbar .brand { font-weight: 700; font-size: 15px; color: #fff; white-space: nowrap; }
+.topbar nav { display: flex; gap: 3px; overflow-x: auto; flex: 1; scrollbar-width: none; }
+.topbar nav::-webkit-scrollbar { display: none; }
+.topbar nav a {
+  color: #cfe1ff; padding: 5px 9px; border-radius: 6px; font-size: 13px; white-space: nowrap;
+}
+.topbar nav a:hover { background: rgba(255,255,255,.14); text-decoration: none; }
+.topbar nav a.active { background: rgba(255,255,255,.22); color: #fff; font-weight: 600; }
+.tb-btn {
+  background: rgba(255,255,255,.12); border: none; color: #fff; cursor: pointer;
+  padding: 6px 10px; border-radius: 6px; font-size: 13px; white-space: nowrap;
+  display: flex; align-items: center; gap: 5px;
+}
+.tb-btn:hover { background: rgba(255,255,255,.24); }
+
+/* ---------- 搜索面板 ---------- */
+#searchMask {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45);
+  z-index: 300; backdrop-filter: blur(2px);
+}
+#searchMask.open { display: block; }
+#searchBox {
+  max-width: 640px; margin: 90px auto 0; background: var(--panel);
+  border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0,0,0,.35);
+}
+#searchInput {
+  width: 100%; border: none; outline: none; padding: 16px 20px; font-size: 16px;
+  background: transparent; color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+#searchResults { max-height: 52vh; overflow-y: auto; }
+#searchResults .sr {
+  display: block; padding: 10px 20px; border-bottom: 1px solid var(--border); color: var(--text);
+}
+#searchResults .sr:hover, #searchResults .sr.sel { background: var(--hl); text-decoration: none; }
+#searchResults .sr .t { font-size: 14.5px; }
+#searchResults .sr .c { font-size: 12px; color: var(--muted); }
+#searchResults .empty { padding: 20px; color: var(--muted); font-size: 14px; text-align: center; }
+.sr-tip { padding: 8px 20px; font-size: 12px; color: var(--muted); }
+
+/* ---------- 布局 ---------- */
+.layout { display: flex; margin-top: 52px; min-height: calc(100vh - 52px); }
+.sidebar {
+  width: var(--sidebar-w); flex: 0 0 var(--sidebar-w);
+  position: sticky; top: 52px; height: calc(100vh - 52px); overflow-y: auto;
+  background: var(--panel); border-right: 1px solid var(--border); padding: 18px 10px 40px;
+}
+.sidebar .toc-title { font-size: 12px; color: var(--muted); letter-spacing: 2px; padding: 0 10px 8px; }
+.sidebar ul { list-style: none; margin: 0; padding-left: 0; }
+.sidebar li { margin: 1px 0; }
+.sidebar a {
+  display: block; padding: 4px 10px; border-radius: 6px; color: var(--text);
+  font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sidebar a:hover { background: var(--hl); text-decoration: none; }
+.sidebar a.active { background: var(--hl); color: var(--accent); font-weight: 600; }
+.sidebar ul ul a { padding-left: 26px; color: var(--muted); font-size: 13px; }
+.sidebar ul ul ul a { padding-left: 42px; font-size: 12.5px; }
+
+.content { flex: 1; min-width: 0; padding: 34px 48px 90px; max-width: 980px; margin: 0 auto; }
+
+/* ---------- 正文排版 ---------- */
+.content h1 {
+  font-size: 30px; border-bottom: 3px solid var(--accent); padding-bottom: 10px; margin-top: 0;
+}
+.content h2 {
+  font-size: 23px; margin-top: 44px; padding: 8px 14px; border-left: 5px solid var(--accent);
+  background: linear-gradient(90deg, var(--hl), transparent); border-radius: 4px;
+}
+.content h3 { font-size: 18px; margin-top: 28px; color: var(--accent); }
+.content blockquote {
+  margin: 14px 0; padding: 10px 16px; border-left: 4px solid var(--accent2);
+  background: var(--code-bg); color: var(--muted); border-radius: 4px;
+}
+.content table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14.5px; }
+.content th, .content td { border: 1px solid var(--border); padding: 7px 12px; text-align: left; }
+.content th { background: var(--hl); }
+.content tr:nth-child(even) { background: var(--code-bg); }
+.content img, .content svg { max-width: 100%; }
+.content code {
+  background: var(--code-bg); padding: 2px 6px; border-radius: 4px;
+  font-family: Consolas, "JetBrains Mono", Menlo, monospace; font-size: 87%;
+  color: var(--inline-code);
+}
+hr { border: none; border-top: 1px solid var(--border); margin: 30px 0; }
+
+/* ---------- 折叠答案 ---------- */
+.content details {
+  margin: 10px 0 18px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--panel); padding: 0 16px;
+}
+.content details[open] { padding-bottom: 8px; }
+.content details > summary {
+  cursor: pointer; padding: 10px 0; font-weight: 600; color: var(--accent);
+  list-style: none; user-select: none;
+}
+.content details > summary::before { content: "▸ "; }
+.content details[open] > summary::before { content: "▾ "; }
+.content details > summary::-webkit-details-marker { display: none; }
+
+/* ---------- 代码块 ---------- */
+.codewrap { position: relative; margin: 14px 0; }
+.codehilite {
+  background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+  padding: 2px 14px; overflow-x: auto; font-size: 13.5px; margin: 0;
+}
+.codehilite pre { margin: 10px 0; }
+.codehilite code { background: transparent; padding: 0; color: inherit; font-size: 100%; }
+.code-tools {
+  position: absolute; top: 6px; right: 8px; display: flex; gap: 6px; opacity: 0;
+  transition: opacity .15s;
+}
+.codewrap:hover .code-tools { opacity: 1; }
+.code-tools button {
+  background: var(--panel); border: 1px solid var(--border); color: var(--muted);
+  font-size: 11.5px; padding: 3px 9px; border-radius: 5px; cursor: pointer;
+}
+.code-tools button:hover { color: var(--accent); border-color: var(--accent); }
+.code-tools button.blocked {
+  cursor: not-allowed; opacity: .55; border-style: dashed;
+}
+.code-tools button.blocked:hover { color: var(--muted); border-color: var(--border); }
+.run-out {
+  display: none; background: #0b1020; color: #b8f2c9; border: 1px solid var(--border);
+  border-top: none; border-radius: 0 0 8px 8px; padding: 10px 14px; font-size: 12.5px;
+  font-family: Consolas, monospace; white-space: pre-wrap; max-height: 340px; overflow: auto;
+}
+.run-out.show { display: block; }
+.run-out.err { color: #ff9f9f; }
+
+/* ---------- Mermaid ---------- */
+.mermaid {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+  padding: 16px; margin: 16px 0; text-align: center; overflow-x: auto;
+}
+
+.footer { text-align: center; color: var(--muted); font-size: 12.5px; padding: 26px 0 40px; }
+
+/* ---------- 首页 ---------- */
+.hero { text-align: center; padding: 46px 20px 8px; }
+.hero h1 { font-size: 34px; border: none; margin-bottom: 6px; }
+.hero p { color: var(--muted); max-width: 720px; margin: 8px auto; }
+.stats { display: flex; justify-content: center; gap: 34px; margin: 22px 0 4px; flex-wrap: wrap; }
+.stats div { text-align: center; }
+.stats b { display: block; font-size: 26px; color: var(--accent); }
+.stats span { font-size: 12.5px; color: var(--muted); }
+.cards {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px; padding: 26px 40px 10px; max-width: 1160px; margin: 0 auto;
+}
+.card {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+  padding: 20px 22px; transition: .15s; display: block; color: var(--text);
+}
+.card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px var(--shadow);
+  border-color: var(--accent); text-decoration: none; }
+.card .icon { font-size: 26px; }
+.card h3 { margin: 8px 0 4px; font-size: 17px; }
+.card p { margin: 0; color: var(--muted); font-size: 13px; }
+.notice {
+  max-width: 900px; margin: 26px auto; background: var(--panel);
+  border: 1px solid var(--border); border-radius: 12px; padding: 18px 26px; font-size: 14px;
+}
+.notice h3 { margin-top: 6px; }
+.notice code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px;
+  color: var(--inline-code); font-family: Consolas, monospace; }
+
+@media (max-width: 900px) {
+  .sidebar { display: none; }
+  .content { padding: 24px 18px 60px; }
+  .topbar .brand { display: none; }
+}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<header class="topbar">
+  <span class="brand">&#128218; AI 时代计算机基础</span>
+  <nav>
+    <a class="active" href="index.html">首页</a>
+    <a href="01-digital.html">数字电子技术</a>
+    <a href="02-analog.html">模拟电子技术</a>
+    <a href="03-organization.html">计算机组成原理</a>
+    <a href="04-architecture.html">计算机体系结构</a>
+    <a href="05-data-structures.html">数据结构</a>
+    <a href="06-algorithms.html">算法设计与分析</a>
+    <a href="07-os.html">操作系统</a>
+  </nav>
+  <button class="tb-btn" onclick="openSearch()">&#128269; 搜索 <kbd>Ctrl K</kbd></button>
+  <button class="tb-btn" id="themeBtn" onclick="toggleTheme()">&#9789; 暗色</button>
+</header>
+<div id="searchMask" onclick="if(event.target===this)closeSearch()">
+  <div id="searchBox">
+    <input id="searchInput" placeholder="搜索章节标题或课程名 ..." oninput="renderSR(this.value)" autocomplete="off">
+    <div id="searchResults"></div>
+  </div>
+</div>
+<div class="hero">
+  <h1>AI 时代计算机基础讲义</h1>
+  <p>面向本科生的核心课程体系：从晶体管到操作系统，理解 AI 算力世界的完整底座。
+  每门课配<b>可视化图示</b>、<b>可运行案例代码</b>、<b>折叠式习题答案</b>与<b>可扩展知识点</b>。</p>
+  <div class="stats">
+    <div><b>7</b><span>门课程</span></div>
+    <div><b>11,095</b><span>行讲义</span></div>
+    <div><b>37</b><span>个示例代码</span></div>
+    <div><b>56</b><span>道习题</span></div>
+  </div>
+</div>
+<div class="cards">
+  <a class="card" href="01-digital.html"><div class="icon">&#9881;</div><h3>数字电子技术</h3><p>门电路 · 组合/时序逻辑 · FSM · FPGA</p></a>
+  <a class="card" href="02-analog.html"><div class="icon">&#9889;</div><h3>模拟电子技术</h3><p>二极管 · 三极管 · 运放 · 反馈 · 电源</p></a>
+  <a class="card" href="03-organization.html"><div class="icon">&#128421;</div><h3>计算机组成原理</h3><p>数据表示 · CPU · 存储层次 · 流水线</p></a>
+  <a class="card" href="04-architecture.html"><div class="icon">&#127959;</div><h3>计算机体系结构</h3><p>量化设计 · ILP/DLP/TLP · DSA/AI芯片</p></a>
+  <a class="card" href="05-data-structures.html"><div class="icon">&#127794;</div><h3>数据结构</h3><p>链表 · 树 · 堆 · 哈希 · 图</p></a>
+  <a class="card" href="06-algorithms.html"><div class="icon">&#129504;</div><h3>算法设计与分析</h3><p>分治 · 贪心 · 动态规划 · 图算法 · NP</p></a>
+  <a class="card" href="07-os.html"><div class="icon">&#128187;</div><h3>操作系统</h3><p>进程 · 调度 · 内存 · 文件系统 · 并发</p></a>
+</div>
+<div class="notice">
+  <h3>&#128640; 如何使用</h3>
+  <ul>
+    <li><b>阅读</b>：点击卡片进入课程，左侧为章节目录；右上角可切换<b>明暗主题</b>，<code>Ctrl+K</code> 全站搜索。</li>
+    <li><b>动手</b>：Python 代码块右上角有<b>「运行」</b>按钮，可直接在浏览器里执行（Pyodide）；也可用<b>「复制」</b>拿到本地跑。</li>
+    <li><b>练习</b>：每门课末尾习题带折叠式参考答案，点击展开。</li>
+    <li><b>扩展</b>：源文件在 <code>docs/md/</code>；修改后运行 <code>python build.py</code> 增量重建（<code>--force</code> 全量）。</li>
+    <li><b>本地示例</b>：<code>code/&lt;课程&gt;/</code> 目录下为独立可运行脚本，Python 示例零依赖。</li>
+  </ul>
+</div>
+<div class="footer">MD 源文件与 HTML 双格式 · 构建工具 build.py</div>
+<script>
+// ===== 主题切换 =====
+(function () {
+  var saved = localStorage.getItem('lec-theme');
+  var sysDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  document.documentElement.setAttribute('data-theme', saved || (sysDark ? 'dark' : 'light'));
+})();
+function toggleTheme() {
+  var cur = document.documentElement.getAttribute('data-theme');
+  var next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('lec-theme', next);
+  var b = document.getElementById('themeBtn');
+  if (b) b.textContent = next === 'dark' ? '\u2600 亮色' : '\u263D 暗色';
+  if (window.mermaid && document.querySelector('.mermaid')) location.reload();
+}
+document.addEventListener('DOMContentLoaded', function () {
+  var b = document.getElementById('themeBtn');
+  if (b) b.textContent = document.documentElement.getAttribute('data-theme') === 'dark'
+    ? '\u2600 亮色' : '\u263D 暗色';
+});
+
+// ===== 全站搜索 =====
+var SEARCH_IDX = [{"t": "0. AI 时代为什么还要学数电", "c": "数字电子技术", "u": "01-digital.html#0-ai"}, {"t": "1. 数制与编码", "c": "数字电子技术", "u": "01-digital.html#1"}, {"t": "知识要点", "c": "数字电子技术", "u": "01-digital.html#_2"}, {"t": "关键概念精讲", "c": "数字电子技术", "u": "01-digital.html#_3"}, {"t": "案例代码：进制转换与补码、格雷码工具", "c": "数字电子技术", "u": "01-digital.html#_4"}, {"t": "2. 逻辑代数与化简", "c": "数字电子技术", "u": "01-digital.html#2"}, {"t": "知识要点", "c": "数字电子技术", "u": "01-digital.html#_5"}, {"t": "关键概念精讲", "c": "数字电子技术", "u": "01-digital.html#_6"}, {"t": "案例代码：真值表生成器 + Quine-McCluskey 简版", "c": "数字电子技术", "u": "01-digital.html#quine-mccluskey"}, {"t": "3. 逻辑门电路", "c": "数字电子技术", "u": "01-digital.html#3"}, {"t": "知识要点", "c": "数字电子技术", "u": "01-digital.html#_7"}, {"t": "关键概念精讲", "c": "数字电子技术", "u": "01-digital.html#_8"}, {"t": "案例代码：带传输延迟的门级仿真", "c": "数字电子技术", "u": "01-digital.html#_9"}, {"t": "4. 组合逻辑电路", "c": "数字电子技术", "u": "01-digital.html#4"}, {"t": "知识要点", "c": "数字电子技术", "u": "01-digital.html#_10"}, {"t": "关键概念精讲", "c": "数字电子技术", "u": "01-digital.html#_11"}, {"t": "案例代码：4 位加法器（Verilog，可综合 + testbench）", "c": "数字电子技术", "u": "01-digital.html#4-verilog-testbench"}, {"t": "5. 锁存器与触发器", "c": "数字电子技术", "u": "01-digital.html#5"}, {"t": "知识要点", "c": "数字电子技术", "u": "01-digital.html#_12"}, {"t": "关键概念精讲", "c": "数字电子技术", "u": "01-digital.html#_13"}, {"t": "案例代码：用类模拟 D 触发器", "c": "数字电子技术", "u": "01-digital.html#d"}, {"t": "6. 时序逻辑分析与设计", "c": "数字电子技术", "u": "01-digital.html#6"}, {"t": "知识要点", "c": "数字电子技术", "u": "01-digital.html#_14"}, {"t": "关键概念精讲", "c": "数字电子技术", "u": "01-digital.html#_15"}, {"t": "案例代码 1：4 位同步计数器模拟（Python）", "c": "数字电子技术", "u": "01-digital.html#14-python"}, {"t": "案例代码 2：模 10 计数器（Verilog，可综合 + testbench）", "c": "数字电子技术", "u": "01-digital.html#2-10-verilog-testbench"}, {"t": "7. 有限状态机", "c": "数字电子技术", "u": "01-digital.html#7"}, {"t": "知识要点", "c": "数字电子技术", "u": "01-digital.html#_16"}, {"t": "关键概念精讲", "c": "数字电子技术", "u": "01-digital.html#_17"}, {"t": "案例代码：自动售货机 FSM（Python）", "c": "数字电子技术", "u": "01-digital.html#fsmpython"}, {"t": "8. 存储器与可编程逻辑", "c": "数字电子技术", "u": "01-digital.html#8"}, {"t": "知识要点", "c": "数字电子技术", "u": "01-digital.html#_18"}, {"t": "关键概念精讲", "c": "数字电子技术", "u": "01-digital.html#_19"}, {"t": "案例代码：用 ROM 查表实现 7 段数码管译码器", "c": "数字电子技术", "u": "01-digital.html#rom-7"}, {"t": "9. 脉冲波形的产生与整形", "c": "数字电子技术", "u": "01-digital.html#9"}, {"t": "知识要点", "c": "数字电子技术", "u": "01-digital.html#_20"}, {"t": "关键概念精讲", "c": "数字电子技术", "u": "01-digital.html#_21"}, {"t": "案例代码：555 多谐振荡器参数计算与波形模拟", "c": "数字电子技术", "u": "01-digital.html#555"}, {"t": "扩展知识点", "c": "数字电子技术", "u": "01-digital.html#_22"}, {"t": "扩展一：脉动阵列的数字实现", "c": "数字电子技术", "u": "01-digital.html#_23"}, {"t": "扩展二：异步电路与亚稳态", "c": "数字电子技术", "u": "01-digital.html#_24"}, {"t": "扩展三：低功耗设计与时钟门控", "c": "数字电子技术", "u": "01-digital.html#_25"}, {"t": "其他扩展方向清单", "c": "数字电子技术", "u": "01-digital.html#_26"}, {"t": "练习与思考题", "c": "数字电子技术", "u": "01-digital.html#_27"}, {"t": "参考资料", "c": "数字电子技术", "u": "01-digital.html#_28"}, {"t": "0. AI 时代为什么还要学模电", "c": "模拟电子技术", "u": "02-analog.html#0-ai"}, {"t": "1. 半导体基础与 PN 结", "c": "模拟电子技术", "u": "02-analog.html#1-pn"}, {"t": "知识要点", "c": "模拟电子技术", "u": "02-analog.html#_2"}, {"t": "关键概念精讲", "c": "模拟电子技术", "u": "02-analog.html#_3"}, {"t": "案例代码：二极管工作点求解", "c": "模拟电子技术", "u": "02-analog.html#_4"}, {"t": "2. 二极管及其应用", "c": "模拟电子技术", "u": "02-analog.html#2"}, {"t": "知识要点", "c": "模拟电子技术", "u": "02-analog.html#_5"}, {"t": "关键概念精讲", "c": "模拟电子技术", "u": "02-analog.html#_6"}, {"t": "案例代码：整流滤波时域仿真", "c": "模拟电子技术", "u": "02-analog.html#_7"}, {"t": "3. 双极型晶体管 BJT", "c": "模拟电子技术", "u": "02-analog.html#3-bjt"}, {"t": "知识要点", "c": "模拟电子技术", "u": "02-analog.html#_8"}, {"t": "关键概念精讲", "c": "模拟电子技术", "u": "02-analog.html#_9"}, {"t": "案例代码：BJT 静态工作点与增益", "c": "模拟电子技术", "u": "02-analog.html#bjt"}, {"t": "4. 场效应管 MOSFET", "c": "模拟电子技术", "u": "02-analog.html#4-mosfet"}, {"t": "知识要点", "c": "模拟电子技术", "u": "02-analog.html#_10"}, {"t": "关键概念精讲", "c": "模拟电子技术", "u": "02-analog.html#_11"}, {"t": "案例代码：MOSFET 共源放大器", "c": "模拟电子技术", "u": "02-analog.html#mosfet"}, {"t": "5. 放大电路的频率响应", "c": "模拟电子技术", "u": "02-analog.html#5"}, {"t": "知识要点", "c": "模拟电子技术", "u": "02-analog.html#_12"}, {"t": "关键概念精讲", "c": "模拟电子技术", "u": "02-analog.html#_13"}, {"t": "案例代码：波特图与米勒效应", "c": "模拟电子技术", "u": "02-analog.html#_14"}, {"t": "6. 负反馈放大电路", "c": "模拟电子技术", "u": "02-analog.html#6"}, {"t": "知识要点", "c": "模拟电子技术", "u": "02-analog.html#_15"}, {"t": "关键概念精讲", "c": "模拟电子技术", "u": "02-analog.html#_16"}, {"t": "案例代码：反馈深度与相位裕度", "c": "模拟电子技术", "u": "02-analog.html#_17"}, {"t": "7. 集成运放及线性应用", "c": "模拟电子技术", "u": "02-analog.html#7"}, {"t": "知识要点", "c": "模拟电子技术", "u": "02-analog.html#_18"}, {"t": "关键概念精讲", "c": "模拟电子技术", "u": "02-analog.html#_19"}, {"t": "案例代码：运放电路计算器", "c": "模拟电子技术", "u": "02-analog.html#_20"}, {"t": "8. 运放非线性应用与有源滤波器", "c": "模拟电子技术", "u": "02-analog.html#8"}, {"t": "知识要点", "c": "模拟电子技术", "u": "02-analog.html#_21"}, {"t": "关键概念精讲", "c": "模拟电子技术", "u": "02-analog.html#_22"}, {"t": "案例代码：Sallen-Key 有源滤波器设计", "c": "模拟电子技术", "u": "02-analog.html#sallen-key"}, {"t": "9. 功率放大与直流稳压电源", "c": "模拟电子技术", "u": "02-analog.html#9"}, {"t": "知识要点", "c": "模拟电子技术", "u": "02-analog.html#_23"}, {"t": "关键概念精讲", "c": "模拟电子技术", "u": "02-analog.html#_24"}, {"t": "案例代码：OCL 效率与电源设计", "c": "模拟电子技术", "u": "02-analog.html#ocl"}, {"t": "附：SPICE 网表示例", "c": "模拟电子技术", "u": "02-analog.html#spice"}, {"t": "扩展知识点", "c": "模拟电子技术", "u": "02-analog.html#_25"}, {"t": "扩展一：模拟存内计算——用欧姆定律做矩阵乘法", "c": "模拟电子技术", "u": "02-analog.html#_26"}, {"t": "扩展二：开关电源 DC-DC 原理——Buck 变换器", "c": "模拟电子技术", "u": "02-analog.html#dc-dc-buck"}, {"t": "扩展三：锁相环 PLL——用负反馈锁住频率与相位", "c": "模拟电子技术", "u": "02-analog.html#pll"}, {"t": "更多方向（待扩展清单）", "c": "模拟电子技术", "u": "02-analog.html#_27"}, {"t": "练习与思考题", "c": "模拟电子技术", "u": "02-analog.html#_28"}, {"t": "参考资料", "c": "模拟电子技术", "u": "02-analog.html#_29"}, {"t": "0. AI 时代为什么还要学计组", "c": "计算机组成原理", "u": "03-organization.html#0-ai"}, {"t": "1. 计算机系统概述", "c": "计算机组成原理", "u": "03-organization.html#1"}, {"t": "知识要点", "c": "计算机组成原理", "u": "03-organization.html#_2"}, {"t": "关键概念精讲", "c": "计算机组成原理", "u": "03-organization.html#_3"}, {"t": "案例代码：性能公式计算器", "c": "计算机组成原理", "u": "03-organization.html#_4"}, {"t": "2. 数据的表示", "c": "计算机组成原理", "u": "03-organization.html#2"}, {"t": "知识要点", "c": "计算机组成原理", "u": "03-organization.html#_5"}, {"t": "关键概念精讲", "c": "计算机组成原理", "u": "03-organization.html#_6"}, {"t": "案例代码：补码运算与位级验算", "c": "计算机组成原理", "u": "03-organization.html#_7"}, {"t": "3. 运算方法与 ALU", "c": "计算机组成原理", "u": "03-organization.html#3-alu"}, {"t": "知识要点", "c": "计算机组成原理", "u": "03-organization.html#_8"}, {"t": "关键概念精讲", "c": "计算机组成原理", "u": "03-organization.html#_9"}, {"t": "案例代码：一个能跑的 ALU", "c": "计算机组成原理", "u": "03-organization.html#alu"}, {"t": "4. 存储系统", "c": "计算机组成原理", "u": "03-organization.html#4"}, {"t": "知识要点", "c": "计算机组成原理", "u": "03-organization.html#_10"}, {"t": "关键概念精讲", "c": "计算机组成原理", "u": "03-organization.html#_11"}, {"t": "案例代码：地址拆分与命中率", "c": "计算机组成原理", "u": "03-organization.html#_12"}, {"t": "5. 指令系统", "c": "计算机组成原理", "u": "03-organization.html#5"}, {"t": "知识要点", "c": "计算机组成原理", "u": "03-organization.html#_13"}, {"t": "关键概念精讲", "c": "计算机组成原理", "u": "03-organization.html#_14"}, {"t": "案例代码：RISC-V 指令编解码", "c": "计算机组成原理", "u": "03-organization.html#risc-v"}, {"t": "6. CPU 结构与数据通路", "c": "计算机组成原理", "u": "03-organization.html#6-cpu"}, {"t": "知识要点", "c": "计算机组成原理", "u": "03-organization.html#_15"}, {"t": "关键概念精讲", "c": "计算机组成原理", "u": "03-organization.html#_16"}, {"t": "案例代码：玩具 CPU 单周期模拟器（招牌案例）", "c": "计算机组成原理", "u": "03-organization.html#cpu"}, {"t": "7. 流水线", "c": "计算机组成原理", "u": "03-organization.html#7"}, {"t": "知识要点", "c": "计算机组成原理", "u": "03-organization.html#_17"}, {"t": "关键概念精讲", "c": "计算机组成原理", "u": "03-organization.html#_18"}, {"t": "案例代码：五级流水线时空图", "c": "计算机组成原理", "u": "03-organization.html#_19"}, {"t": "8. 总线与输入输出", "c": "计算机组成原理", "u": "03-organization.html#8"}, {"t": "知识要点", "c": "计算机组成原理", "u": "03-organization.html#_20"}, {"t": "关键概念精讲", "c": "计算机组成原理", "u": "03-organization.html#_21"}, {"t": "案例代码：三种 I/O 方式的 CPU 占用率", "c": "计算机组成原理", "u": "03-organization.html#io-cpu"}, {"t": "9. 多处理器与并行体系结构初步", "c": "计算机组成原理", "u": "03-organization.html#9"}, {"t": "知识要点", "c": "计算机组成原理", "u": "03-organization.html#_22"}, {"t": "关键概念精讲", "c": "计算机组成原理", "u": "03-organization.html#_23"}, {"t": "案例代码：MESI 状态机与伪共享", "c": "计算机组成原理", "u": "03-organization.html#mesi"}, {"t": "扩展知识点", "c": "计算机组成原理", "u": "03-organization.html#_24"}, {"t": "深入一：RISC-V 指令集详解与自制 CPU 路线", "c": "计算机组成原理", "u": "03-organization.html#risc-v-cpu"}, {"t": "深入二：虚拟存储与 TLB 地址翻译全流程", "c": "计算机组成原理", "u": "03-organization.html#tlb"}, {"t": "深入三：DRAM/HBM 内部结构与内存墙", "c": "计算机组成原理", "u": "03-organization.html#dramhbm"}, {"t": "练习与思考题", "c": "计算机组成原理", "u": "03-organization.html#_25"}, {"t": "参考资料", "c": "计算机组成原理", "u": "03-organization.html#_26"}, {"t": "0. AI 时代为什么还要学体系结构", "c": "计算机体系结构", "u": "04-architecture.html#0-ai"}, {"t": "1. 量化设计基础：性能公式、Amdahl 定律与能耗", "c": "计算机体系结构", "u": "04-architecture.html#1-amdahl"}, {"t": "知识要点", "c": "计算机体系结构", "u": "04-architecture.html#_2"}, {"t": "关键概念精讲", "c": "计算机体系结构", "u": "04-architecture.html#_3"}, {"t": "案例代码", "c": "计算机体系结构", "u": "04-architecture.html#_4"}, {"t": "2. 指令级并行 ILP：动态调度与寄存器重命名", "c": "计算机体系结构", "u": "04-architecture.html#2-ilp"}, {"t": "知识要点", "c": "计算机体系结构", "u": "04-architecture.html#_5"}, {"t": "关键概念精讲", "c": "计算机体系结构", "u": "04-architecture.html#_6"}, {"t": "Tomasulo 算法详解", "c": "计算机体系结构", "u": "04-architecture.html#tomasulo"}, {"t": "寄存器重命名深入：从 RAT 到物理寄存器堆", "c": "计算机体系结构", "u": "04-architecture.html#rat"}, {"t": "案例代码一：寄存器重命名模拟", "c": "计算机体系结构", "u": "04-architecture.html#_11"}, {"t": "案例代码二：Tomasulo 模拟器", "c": "计算机体系结构", "u": "04-architecture.html#tomasulo_2"}, {"t": "案例代码三：转发能救回多少停顿", "c": "计算机体系结构", "u": "04-architecture.html#_12"}, {"t": "3. 分支预测", "c": "计算机体系结构", "u": "04-architecture.html#3"}, {"t": "知识要点", "c": "计算机体系结构", "u": "04-architecture.html#_13"}, {"t": "关键概念精讲", "c": "计算机体系结构", "u": "04-architecture.html#_14"}, {"t": "案例代码", "c": "计算机体系结构", "u": "04-architecture.html#_15"}, {"t": "4. 超标量与乱序执行：ROB 与推测执行", "c": "计算机体系结构", "u": "04-architecture.html#4-rob"}, {"t": "知识要点", "c": "计算机体系结构", "u": "04-architecture.html#_16"}, {"t": "关键概念精讲", "c": "计算机体系结构", "u": "04-architecture.html#_17"}, {"t": "现代乱序核的完整流水线", "c": "计算机体系结构", "u": "04-architecture.html#_18"}, {"t": "ROB 表项结构与按序提交", "c": "计算机体系结构", "u": "04-architecture.html#rob"}, {"t": "案例代码一：ROB 与误预测回滚", "c": "计算机体系结构", "u": "04-architecture.html#rob_1"}, {"t": "案例代码二：精确异常", "c": "计算机体系结构", "u": "04-architecture.html#_19"}, {"t": "案例代码三：顺序 vs 乱序", "c": "计算机体系结构", "u": "04-architecture.html#vs"}, {"t": "5. Cache 进阶与存储墙", "c": "计算机体系结构", "u": "04-architecture.html#5-cache"}, {"t": "知识要点", "c": "计算机体系结构", "u": "04-architecture.html#_20"}, {"t": "关键概念精讲", "c": "计算机体系结构", "u": "04-architecture.html#_21"}, {"t": "案例代码", "c": "计算机体系结构", "u": "04-architecture.html#_22"}, {"t": "6. 数据级并行 DLP：SIMD、向量机与 GPU 的 SIMT", "c": "计算机体系结构", "u": "04-architecture.html#6-dlpsimd-gpu-simt"}, {"t": "知识要点", "c": "计算机体系结构", "u": "04-architecture.html#_23"}, {"t": "关键概念精讲", "c": "计算机体系结构", "u": "04-architecture.html#_24"}, {"t": "案例代码", "c": "计算机体系结构", "u": "04-architecture.html#_25"}, {"t": "7. 线程级并行 TLP：多核、MESI 与存储一致性", "c": "计算机体系结构", "u": "04-architecture.html#7-tlpmesi"}, {"t": "知识要点", "c": "计算机体系结构", "u": "04-architecture.html#_26"}, {"t": "关键概念精讲", "c": "计算机体系结构", "u": "04-architecture.html#_27"}, {"t": "案例代码", "c": "计算机体系结构", "u": "04-architecture.html#_28"}, {"t": "8. 领域专用架构 DSA：TPU 与脉动阵列", "c": "计算机体系结构", "u": "04-architecture.html#8-dsatpu"}, {"t": "知识要点", "c": "计算机体系结构", "u": "04-architecture.html#_29"}, {"t": "关键概念精讲", "c": "计算机体系结构", "u": "04-architecture.html#_30"}, {"t": "案例代码（招牌案例）", "c": "计算机体系结构", "u": "04-architecture.html#_31"}, {"t": "9. 互连与 Chiplet", "c": "计算机体系结构", "u": "04-architecture.html#9-chiplet"}, {"t": "知识要点", "c": "计算机体系结构", "u": "04-architecture.html#_32"}, {"t": "关键概念精讲", "c": "计算机体系结构", "u": "04-architecture.html#_33"}, {"t": "案例代码", "c": "计算机体系结构", "u": "04-architecture.html#_34"}, {"t": "扩展知识点", "c": "计算机体系结构", "u": "04-architecture.html#_35"}, {"t": "扩展一：Roofline 性能建模实战", "c": "计算机体系结构", "u": "04-architecture.html#roofline"}, {"t": "扩展二：GPU 架构与 SIMT 执行模型深入", "c": "计算机体系结构", "u": "04-architecture.html#gpu-simt"}, {"t": "扩展三：存内计算 PIM 与 CXL 内存解耦", "c": "计算机体系结构", "u": "04-architecture.html#pim-cxl"}, {"t": "其余自学清单", "c": "计算机体系结构", "u": "04-architecture.html#_44"}, {"t": "练习与思考题", "c": "计算机体系结构", "u": "04-architecture.html#_45"}, {"t": "参考资料", "c": "计算机体系结构", "u": "04-architecture.html#_46"}, {"t": "0. AI 时代为什么还要学数据结构", "c": "数据结构", "u": "05-data-structures.html#0-ai"}, {"t": "1. 绪论与复杂度分析", "c": "数据结构", "u": "05-data-structures.html#1"}, {"t": "知识要点", "c": "数据结构", "u": "05-data-structures.html#_2"}, {"t": "关键概念精讲", "c": "数据结构", "u": "05-data-structures.html#_3"}, {"t": "案例代码：复杂度实测", "c": "数据结构", "u": "05-data-structures.html#_4"}, {"t": "2. 线性表", "c": "数据结构", "u": "05-data-structures.html#2"}, {"t": "知识要点", "c": "数据结构", "u": "05-data-structures.html#_5"}, {"t": "关键概念精讲", "c": "数据结构", "u": "05-data-structures.html#_6"}, {"t": "案例代码：链表经典操作", "c": "数据结构", "u": "05-data-structures.html#_7"}, {"t": "C 版本对照", "c": "数据结构", "u": "05-data-structures.html#c"}, {"t": "招牌案例：LRU 缓存 = 哈希表 + 双向链表", "c": "数据结构", "u": "05-data-structures.html#lru"}, {"t": "3. 栈与队列", "c": "数据结构", "u": "05-data-structures.html#3"}, {"t": "知识要点", "c": "数据结构", "u": "05-data-structures.html#_8"}, {"t": "关键概念精讲", "c": "数据结构", "u": "05-data-structures.html#_9"}, {"t": "案例代码：括号匹配 + 表达式求值 + 单调栈", "c": "数据结构", "u": "05-data-structures.html#_10"}, {"t": "4. 串与数组", "c": "数据结构", "u": "05-data-structures.html#4"}, {"t": "知识要点", "c": "数据结构", "u": "05-data-structures.html#_11"}, {"t": "关键概念精讲", "c": "数据结构", "u": "05-data-structures.html#_12"}, {"t": "案例代码：KMP + 稀疏矩阵", "c": "数据结构", "u": "05-data-structures.html#kmp"}, {"t": "5. 树与二叉树", "c": "数据结构", "u": "05-data-structures.html#5"}, {"t": "知识要点", "c": "数据结构", "u": "05-data-structures.html#_13"}, {"t": "关键概念精讲", "c": "数据结构", "u": "05-data-structures.html#_14"}, {"t": "案例代码：遍历 + 哈夫曼编码", "c": "数据结构", "u": "05-data-structures.html#_15"}, {"t": "6. 二叉搜索树与平衡树", "c": "数据结构", "u": "05-data-structures.html#6"}, {"t": "知识要点", "c": "数据结构", "u": "05-data-structures.html#_16"}, {"t": "关键概念精讲", "c": "数据结构", "u": "05-data-structures.html#_17"}, {"t": "案例代码：AVL 旋转与平衡插入", "c": "数据结构", "u": "05-data-structures.html#avl"}, {"t": "7. 堆与优先队列", "c": "数据结构", "u": "05-data-structures.html#7"}, {"t": "知识要点", "c": "数据结构", "u": "05-data-structures.html#_18"}, {"t": "关键概念精讲", "c": "数据结构", "u": "05-data-structures.html#_19"}, {"t": "案例代码：TopK 与优先队列调度", "c": "数据结构", "u": "05-data-structures.html#topk"}, {"t": "8. 图", "c": "数据结构", "u": "05-data-structures.html#8"}, {"t": "知识要点", "c": "数据结构", "u": "05-data-structures.html#_20"}, {"t": "关键概念精讲", "c": "数据结构", "u": "05-data-structures.html#_21"}, {"t": "案例代码：BFS/DFS/拓扑排序/关键路径", "c": "数据结构", "u": "05-data-structures.html#bfsdfs"}, {"t": "9. 查找与哈希", "c": "数据结构", "u": "05-data-structures.html#9"}, {"t": "知识要点", "c": "数据结构", "u": "05-data-structures.html#_22"}, {"t": "关键概念精讲", "c": "数据结构", "u": "05-data-structures.html#_23"}, {"t": "案例代码：二分查找 + 布隆过滤器", "c": "数据结构", "u": "05-data-structures.html#_24"}, {"t": "C 版本对照", "c": "数据结构", "u": "05-data-structures.html#c_1"}, {"t": "扩展知识点", "c": "数据结构", "u": "05-data-structures.html#_25"}, {"t": "扩展一：跳表 Skip List——用抛硬币代替旋转", "c": "数据结构", "u": "05-data-structures.html#skip-list"}, {"t": "扩展二：LSM-Tree——把随机写变成顺序写", "c": "数据结构", "u": "05-data-structures.html#lsm-tree"}, {"t": "扩展三：HNSW——向量检索的分层小世界图", "c": "数据结构", "u": "05-data-structures.html#hnsw"}, {"t": "练习与思考题", "c": "数据结构", "u": "05-data-structures.html#_26"}, {"t": "参考资料", "c": "数据结构", "u": "05-data-structures.html#_27"}, {"t": "0. AI 时代为什么还要学算法", "c": "算法设计与分析", "u": "06-algorithms.html#0-ai"}, {"t": "1. 算法分析基础", "c": "算法设计与分析", "u": "06-algorithms.html#1"}, {"t": "知识要点", "c": "算法设计与分析", "u": "06-algorithms.html#_2"}, {"t": "关键概念精讲", "c": "算法设计与分析", "u": "06-algorithms.html#_3"}, {"t": "案例代码：二分查找与增长率实测", "c": "算法设计与分析", "u": "06-algorithms.html#_4"}, {"t": "2. 分治策略", "c": "算法设计与分析", "u": "06-algorithms.html#2"}, {"t": "知识要点", "c": "算法设计与分析", "u": "06-algorithms.html#_5"}, {"t": "关键概念精讲", "c": "算法设计与分析", "u": "06-algorithms.html#_6"}, {"t": "案例代码：最近点对与快速幂", "c": "算法设计与分析", "u": "06-algorithms.html#_7"}, {"t": "3. 排序算法全景", "c": "算法设计与分析", "u": "06-algorithms.html#3"}, {"t": "知识要点", "c": "算法设计与分析", "u": "06-algorithms.html#_8"}, {"t": "关键概念精讲", "c": "算法设计与分析", "u": "06-algorithms.html#_9"}, {"t": "案例代码：三路快排与性能实测", "c": "算法设计与分析", "u": "06-algorithms.html#_10"}, {"t": "4. 贪心算法", "c": "算法设计与分析", "u": "06-algorithms.html#4"}, {"t": "知识要点", "c": "算法设计与分析", "u": "06-algorithms.html#_11"}, {"t": "关键概念精讲", "c": "算法设计与分析", "u": "06-algorithms.html#_12"}, {"t": "案例代码：区间调度与哈夫曼编码", "c": "算法设计与分析", "u": "06-algorithms.html#_13"}, {"t": "5. 动态规划", "c": "算法设计与分析", "u": "06-algorithms.html#5"}, {"t": "知识要点", "c": "算法设计与分析", "u": "06-algorithms.html#_14"}, {"t": "关键概念精讲", "c": "算法设计与分析", "u": "06-algorithms.html#_15"}, {"t": "案例代码：编辑距离（DP 表逐行打印）", "c": "算法设计与分析", "u": "06-algorithms.html#dp"}, {"t": "6. 图算法", "c": "算法设计与分析", "u": "06-algorithms.html#6"}, {"t": "知识要点", "c": "算法设计与分析", "u": "06-algorithms.html#_16"}, {"t": "关键概念精讲", "c": "算法设计与分析", "u": "06-algorithms.html#_17"}, {"t": "案例代码：Dijkstra 逐步松弛", "c": "算法设计与分析", "u": "06-algorithms.html#dijkstra"}, {"t": "7. 回溯与分支限界", "c": "算法设计与分析", "u": "06-algorithms.html#7"}, {"t": "知识要点", "c": "算法设计与分析", "u": "06-algorithms.html#_18"}, {"t": "关键概念精讲", "c": "算法设计与分析", "u": "06-algorithms.html#_19"}, {"t": "案例代码：N 皇后", "c": "算法设计与分析", "u": "06-algorithms.html#n"}, {"t": "8. 字符串算法", "c": "算法设计与分析", "u": "06-algorithms.html#8"}, {"t": "知识要点", "c": "算法设计与分析", "u": "06-algorithms.html#_20"}, {"t": "关键概念精讲", "c": "算法设计与分析", "u": "06-algorithms.html#_21"}, {"t": "案例代码：KMP 与 Trie", "c": "算法设计与分析", "u": "06-algorithms.html#kmp-trie"}, {"t": "9. NP 完全性与近似算法", "c": "算法设计与分析", "u": "06-algorithms.html#9-np"}, {"t": "知识要点", "c": "算法设计与分析", "u": "06-algorithms.html#_22"}, {"t": "关键概念精讲", "c": "算法设计与分析", "u": "06-algorithms.html#_23"}, {"t": "案例代码：TSP 启发式与顶点覆盖近似", "c": "算法设计与分析", "u": "06-algorithms.html#tsp"}, {"t": "扩展知识点", "c": "算法设计与分析", "u": "06-algorithms.html#_24"}, {"t": "线段树与区间查询", "c": "算法设计与分析", "u": "06-algorithms.html#_25"}, {"t": "网络流：最大流与最小割", "c": "算法设计与分析", "u": "06-algorithms.html#_26"}, {"t": "算法在 LLM 推理中的应用：KV-Cache、Beam Search 与投机解码", "c": "算法设计与分析", "u": "06-algorithms.html#llm-kv-cachebeam-search"}, {"t": "练习与思考题", "c": "算法设计与分析", "u": "06-algorithms.html#_27"}, {"t": "参考资料", "c": "算法设计与分析", "u": "06-algorithms.html#_28"}, {"t": "0. AI 时代为什么还要学操作系统", "c": "操作系统", "u": "07-os.html#0-ai"}, {"t": "1. 操作系统概述", "c": "操作系统", "u": "07-os.html#1"}, {"t": "知识要点", "c": "操作系统", "u": "07-os.html#_2"}, {"t": "关键概念精讲", "c": "操作系统", "u": "07-os.html#_3"}, {"t": "案例代码：观察系统调用与切换开销", "c": "操作系统", "u": "07-os.html#_4"}, {"t": "2. 进程与线程", "c": "操作系统", "u": "07-os.html#2"}, {"t": "知识要点", "c": "操作系统", "u": "07-os.html#_5"}, {"t": "关键概念精讲", "c": "操作系统", "u": "07-os.html#_6"}, {"t": "案例代码：GIL 下线程对 CPU 密集与 I/O 密集任务的差异", "c": "操作系统", "u": "07-os.html#gil-cpu-io"}, {"t": "3. CPU 调度", "c": "操作系统", "u": "07-os.html#3-cpu"}, {"t": "知识要点", "c": "操作系统", "u": "07-os.html#_7"}, {"t": "关键概念精讲", "c": "操作系统", "u": "07-os.html#_8"}, {"t": "案例代码：FCFS / SJF / RR 三种调度的周转与等待时间对比", "c": "操作系统", "u": "07-os.html#fcfs-sjf-rr"}, {"t": "4. 进程同步与互斥", "c": "操作系统", "u": "07-os.html#4"}, {"t": "知识要点", "c": "操作系统", "u": "07-os.html#_9"}, {"t": "关键概念精讲", "c": "操作系统", "u": "07-os.html#_10"}, {"t": "案例代码：竞争条件复现与加锁修复", "c": "操作系统", "u": "07-os.html#_11"}, {"t": "5. 死锁", "c": "操作系统", "u": "07-os.html#5"}, {"t": "知识要点", "c": "操作系统", "u": "07-os.html#_12"}, {"t": "关键概念精讲", "c": "操作系统", "u": "07-os.html#_13"}, {"t": "案例代码：银行家算法安全性检查（精简版）", "c": "操作系统", "u": "07-os.html#_14"}, {"t": "6. 内存管理", "c": "操作系统", "u": "07-os.html#6"}, {"t": "知识要点", "c": "操作系统", "u": "07-os.html#_15"}, {"t": "关键概念精讲", "c": "操作系统", "u": "07-os.html#_16"}, {"t": "案例代码：分页地址翻译模拟（含 TLB）", "c": "操作系统", "u": "07-os.html#tlb"}, {"t": "7. 虚拟内存与页面置换", "c": "操作系统", "u": "07-os.html#7"}, {"t": "知识要点", "c": "操作系统", "u": "07-os.html#_17"}, {"t": "关键概念精讲", "c": "操作系统", "u": "07-os.html#_18"}, {"t": "案例代码：FIFO 与 LRU 缺页对比 + Belady 异常复现", "c": "操作系统", "u": "07-os.html#fifo-lru-belady"}, {"t": "8. 文件系统", "c": "操作系统", "u": "07-os.html#8"}, {"t": "知识要点", "c": "操作系统", "u": "07-os.html#_19"}, {"t": "关键概念精讲", "c": "操作系统", "u": "07-os.html#_20"}, {"t": "案例代码：磁盘调度 FCFS / SSTF / SCAN 寻道距离对比", "c": "操作系统", "u": "07-os.html#fcfs-sstf-scan"}, {"t": "9. I/O 与设备管理", "c": "操作系统", "u": "07-os.html#9-io"}, {"t": "知识要点", "c": "操作系统", "u": "07-os.html#_21"}, {"t": "关键概念精讲", "c": "操作系统", "u": "07-os.html#_22"}, {"t": "案例代码：用户态缓冲的威力——缓冲写 vs 直通系统调用写", "c": "操作系统", "u": "07-os.html#vs"}, {"t": "扩展知识点", "c": "操作系统", "u": "07-os.html#_23"}, {"t": "容器与命名空间、cgroups", "c": "操作系统", "u": "07-os.html#cgroups"}, {"t": "GPU 显存管理与统一内存", "c": "操作系统", "u": "07-os.html#gpu"}, {"t": "PagedAttention 与 vLLM 的分页思想", "c": "操作系统", "u": "07-os.html#pagedattention-vllm"}, {"t": "练习与思考题", "c": "操作系统", "u": "07-os.html#_24"}, {"t": "参考资料", "c": "操作系统", "u": "07-os.html#_25"}];
+var srSel = 0, srItems = [];
+function openSearch() {
+  document.getElementById('searchMask').classList.add('open');
+  var i = document.getElementById('searchInput');
+  i.value = ''; i.focus(); renderSR('');
+}
+function closeSearch() { document.getElementById('searchMask').classList.remove('open'); }
+function renderSR(q) {
+  var box = document.getElementById('searchResults');
+  q = q.trim().toLowerCase();
+  if (!q) {
+    box.innerHTML = '<div class="sr-tip">输入关键词检索全部课程章节 · \u2191\u2193 选择 · Enter 跳转 · Esc 关闭</div>';
+    srItems = []; return;
+  }
+  var hits = SEARCH_IDX.filter(function (r) {
+    return r.t.toLowerCase().indexOf(q) >= 0 || r.c.toLowerCase().indexOf(q) >= 0;
+  }).slice(0, 40);
+  if (!hits.length) { box.innerHTML = '<div class="empty">没有找到匹配的章节</div>'; srItems = []; return; }
+  box.innerHTML = hits.map(function (r, i) {
+    return '<a class="sr' + (i === 0 ? ' sel' : '') + '" href="' + r.u + '">' +
+      '<div class="t">' + r.t + '</div><div class="c">' + r.c + '</div></a>';
+  }).join('');
+  srSel = 0; srItems = box.querySelectorAll('.sr');
+}
+document.addEventListener('keydown', function (e) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); openSearch(); return; }
+  var mask = document.getElementById('searchMask');
+  if (!mask || !mask.classList.contains('open')) return;
+  if (e.key === 'Escape') { closeSearch(); }
+  else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (!srItems.length) return;
+    srItems[srSel].classList.remove('sel');
+    srSel = (srSel + (e.key === 'ArrowDown' ? 1 : srItems.length - 1)) % srItems.length;
+    srItems[srSel].classList.add('sel');
+    srItems[srSel].scrollIntoView({ block: 'nearest' });
+  } else if (e.key === 'Enter') {
+    if (srItems.length) { e.preventDefault(); location.href = srItems[srSel].getAttribute('href'); }
+  }
+});
+
+// ===== 代码复制 / 运行 =====
+function copyCode(btn) {
+  var pre = btn.closest('.codewrap').querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText).then(function () {
+    var o = btn.textContent; btn.textContent = '\u2713 已复制';
+    setTimeout(function () { btn.textContent = o; }, 1500);
+  });
+}
+var pyodideReady = null;
+function loadPyodideOnce(statusCb) {
+  if (pyodideReady) return pyodideReady;
+  statusCb('正在加载 Python 运行时（首次约 10 秒）...');
+  pyodideReady = new Promise(function (resolve, reject) {
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js';
+    s.onload = function () {
+      loadPyodide({ indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/' })
+        .then(resolve).catch(reject);
+    };
+    s.onerror = function () { reject(new Error('Pyodide 加载失败，请检查网络连接')); };
+    document.head.appendChild(s);
+  });
+  return pyodideReady;
+}
+function runCode(btn, slow) {
+  var wrap = btn.closest('.codewrap');
+  // 输出区是 .codewrap 的直接兄弟节点，必须按相邻关系取，
+  // 不能用 parentNode.querySelector（那样所有代码块都会写进页面第一个输出区）
+  var out = wrap.nextElementSibling;
+  if (!out || !out.classList.contains('run-out')) return;
+  if (slow && !btn.dataset.confirmed) {
+    if (!confirm('这段代码包含性能测试或大规模循环。\n' +
+                 '浏览器内的 Python 比本地慢数倍，运行期间页面会暂时无响应。\n\n仍要运行吗？')) return;
+    btn.dataset.confirmed = '1';
+  }
+  var code = wrap.querySelector('pre').innerText;
+  out.classList.add('show'); out.classList.remove('err');
+  var setTxt = function (t) { out.textContent = t; };
+  btn.disabled = true;
+  loadPyodideOnce(setTxt).then(function (py) {
+    setTxt('运行中 ...');
+    var buf = [];
+    py.setStdout({ batched: function (s) { buf.push(s); } });
+    py.setStderr({ batched: function (s) { buf.push(s); } });
+    // 让出一帧，确保"运行中"先渲染出来再进入同步执行
+    setTimeout(function () {
+      try {
+        py.runPython(code);
+        out.textContent = buf.join('\n') || '(无输出，程序正常结束)';
+      } catch (err) {
+        out.classList.add('err');
+        out.textContent = (buf.length ? buf.join('\n') + '\n' : '') + String(err.message || err);
+      }
+      btn.disabled = false;
+    }, 30);
+  }).catch(function (e) {
+    out.classList.add('err'); setTxt(String(e.message || e)); btn.disabled = false;
+  });
+}
+
+// ===== 阅读进度 & 目录高亮 =====
+document.addEventListener('scroll', function () {
+  var h = document.documentElement;
+  var p = h.scrollTop / (h.scrollHeight - h.clientHeight || 1) * 100;
+  var bar = document.getElementById('progress');
+  if (bar) bar.style.width = p + '%';
+  var heads = document.querySelectorAll('.content h2, .content h3');
+  var cur = null;
+  for (var i = 0; i < heads.length; i++) {
+    if (heads[i].getBoundingClientRect().top < 120) cur = heads[i].id;
+  }
+  if (cur) {
+    document.querySelectorAll('.sidebar a').forEach(function (a) {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + cur);
+    });
+  }
+}, { passive: true });
+</script>
+</body>
+</html>

@@ -1,0 +1,2004 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>操作系统 · AI 时代计算机基础讲义</title>
+<style>
+:root {
+  --bg: #f7f8fa; --panel: #ffffff; --text: #24292f; --muted: #57606a;
+  --accent: #0969da; --accent2: #8250df; --border: #d0d7de;
+  --code-bg: #f3f5f7; --inline-code: #b3003c; --hl: #eaf1fb;
+  --topbar: linear-gradient(90deg, #0b2545, #13315c 60%, #1d4e89);
+  --sidebar-w: 300px; --shadow: rgba(9,105,218,.12);
+}
+html[data-theme="dark"] {
+  --bg: #0d1117; --panel: #161b22; --text: #e6edf3; --muted: #9198a1;
+  --accent: #58a6ff; --accent2: #bc8cff; --border: #30363d;
+  --code-bg: #1c2128; --inline-code: #ff7b9c; --hl: #1c2b45;
+  --topbar: linear-gradient(90deg, #010409, #0d1117 60%, #161b22);
+  --shadow: rgba(0,0,0,.5);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+  line-height: 1.75; font-size: 16px;
+  transition: background .2s, color .2s;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ---------- 阅读进度条 ---------- */
+#progress {
+  position: fixed; top: 0; left: 0; height: 3px; width: 0;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  z-index: 200; transition: width .1s linear;
+}
+
+/* ---------- 顶栏 ---------- */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; height: 52px; z-index: 100;
+  background: var(--topbar);
+  color: #fff; display: flex; align-items: center; padding: 0 16px; gap: 14px;
+  box-shadow: 0 1px 6px rgba(0,0,0,.25);
+}
+.topbar .brand { font-weight: 700; font-size: 15px; color: #fff; white-space: nowrap; }
+.topbar nav { display: flex; gap: 3px; overflow-x: auto; flex: 1; scrollbar-width: none; }
+.topbar nav::-webkit-scrollbar { display: none; }
+.topbar nav a {
+  color: #cfe1ff; padding: 5px 9px; border-radius: 6px; font-size: 13px; white-space: nowrap;
+}
+.topbar nav a:hover { background: rgba(255,255,255,.14); text-decoration: none; }
+.topbar nav a.active { background: rgba(255,255,255,.22); color: #fff; font-weight: 600; }
+.tb-btn {
+  background: rgba(255,255,255,.12); border: none; color: #fff; cursor: pointer;
+  padding: 6px 10px; border-radius: 6px; font-size: 13px; white-space: nowrap;
+  display: flex; align-items: center; gap: 5px;
+}
+.tb-btn:hover { background: rgba(255,255,255,.24); }
+
+/* ---------- 搜索面板 ---------- */
+#searchMask {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45);
+  z-index: 300; backdrop-filter: blur(2px);
+}
+#searchMask.open { display: block; }
+#searchBox {
+  max-width: 640px; margin: 90px auto 0; background: var(--panel);
+  border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0,0,0,.35);
+}
+#searchInput {
+  width: 100%; border: none; outline: none; padding: 16px 20px; font-size: 16px;
+  background: transparent; color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+#searchResults { max-height: 52vh; overflow-y: auto; }
+#searchResults .sr {
+  display: block; padding: 10px 20px; border-bottom: 1px solid var(--border); color: var(--text);
+}
+#searchResults .sr:hover, #searchResults .sr.sel { background: var(--hl); text-decoration: none; }
+#searchResults .sr .t { font-size: 14.5px; }
+#searchResults .sr .c { font-size: 12px; color: var(--muted); }
+#searchResults .empty { padding: 20px; color: var(--muted); font-size: 14px; text-align: center; }
+.sr-tip { padding: 8px 20px; font-size: 12px; color: var(--muted); }
+
+/* ---------- 布局 ---------- */
+.layout { display: flex; margin-top: 52px; min-height: calc(100vh - 52px); }
+.sidebar {
+  width: var(--sidebar-w); flex: 0 0 var(--sidebar-w);
+  position: sticky; top: 52px; height: calc(100vh - 52px); overflow-y: auto;
+  background: var(--panel); border-right: 1px solid var(--border); padding: 18px 10px 40px;
+}
+.sidebar .toc-title { font-size: 12px; color: var(--muted); letter-spacing: 2px; padding: 0 10px 8px; }
+.sidebar ul { list-style: none; margin: 0; padding-left: 0; }
+.sidebar li { margin: 1px 0; }
+.sidebar a {
+  display: block; padding: 4px 10px; border-radius: 6px; color: var(--text);
+  font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sidebar a:hover { background: var(--hl); text-decoration: none; }
+.sidebar a.active { background: var(--hl); color: var(--accent); font-weight: 600; }
+.sidebar ul ul a { padding-left: 26px; color: var(--muted); font-size: 13px; }
+.sidebar ul ul ul a { padding-left: 42px; font-size: 12.5px; }
+
+.content { flex: 1; min-width: 0; padding: 34px 48px 90px; max-width: 980px; margin: 0 auto; }
+
+/* ---------- 正文排版 ---------- */
+.content h1 {
+  font-size: 30px; border-bottom: 3px solid var(--accent); padding-bottom: 10px; margin-top: 0;
+}
+.content h2 {
+  font-size: 23px; margin-top: 44px; padding: 8px 14px; border-left: 5px solid var(--accent);
+  background: linear-gradient(90deg, var(--hl), transparent); border-radius: 4px;
+}
+.content h3 { font-size: 18px; margin-top: 28px; color: var(--accent); }
+.content blockquote {
+  margin: 14px 0; padding: 10px 16px; border-left: 4px solid var(--accent2);
+  background: var(--code-bg); color: var(--muted); border-radius: 4px;
+}
+.content table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14.5px; }
+.content th, .content td { border: 1px solid var(--border); padding: 7px 12px; text-align: left; }
+.content th { background: var(--hl); }
+.content tr:nth-child(even) { background: var(--code-bg); }
+.content img, .content svg { max-width: 100%; }
+.content code {
+  background: var(--code-bg); padding: 2px 6px; border-radius: 4px;
+  font-family: Consolas, "JetBrains Mono", Menlo, monospace; font-size: 87%;
+  color: var(--inline-code);
+}
+hr { border: none; border-top: 1px solid var(--border); margin: 30px 0; }
+
+/* ---------- 折叠答案 ---------- */
+.content details {
+  margin: 10px 0 18px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--panel); padding: 0 16px;
+}
+.content details[open] { padding-bottom: 8px; }
+.content details > summary {
+  cursor: pointer; padding: 10px 0; font-weight: 600; color: var(--accent);
+  list-style: none; user-select: none;
+}
+.content details > summary::before { content: "▸ "; }
+.content details[open] > summary::before { content: "▾ "; }
+.content details > summary::-webkit-details-marker { display: none; }
+
+/* ---------- 代码块 ---------- */
+.codewrap { position: relative; margin: 14px 0; }
+.codehilite {
+  background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+  padding: 2px 14px; overflow-x: auto; font-size: 13.5px; margin: 0;
+}
+.codehilite pre { margin: 10px 0; }
+.codehilite code { background: transparent; padding: 0; color: inherit; font-size: 100%; }
+.code-tools {
+  position: absolute; top: 6px; right: 8px; display: flex; gap: 6px; opacity: 0;
+  transition: opacity .15s;
+}
+.codewrap:hover .code-tools { opacity: 1; }
+.code-tools button {
+  background: var(--panel); border: 1px solid var(--border); color: var(--muted);
+  font-size: 11.5px; padding: 3px 9px; border-radius: 5px; cursor: pointer;
+}
+.code-tools button:hover { color: var(--accent); border-color: var(--accent); }
+.code-tools button.blocked {
+  cursor: not-allowed; opacity: .55; border-style: dashed;
+}
+.code-tools button.blocked:hover { color: var(--muted); border-color: var(--border); }
+.run-out {
+  display: none; background: #0b1020; color: #b8f2c9; border: 1px solid var(--border);
+  border-top: none; border-radius: 0 0 8px 8px; padding: 10px 14px; font-size: 12.5px;
+  font-family: Consolas, monospace; white-space: pre-wrap; max-height: 340px; overflow: auto;
+}
+.run-out.show { display: block; }
+.run-out.err { color: #ff9f9f; }
+
+/* ---------- Mermaid ---------- */
+.mermaid {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+  padding: 16px; margin: 16px 0; text-align: center; overflow-x: auto;
+}
+
+.footer { text-align: center; color: var(--muted); font-size: 12.5px; padding: 26px 0 40px; }
+
+/* ---------- 首页 ---------- */
+.hero { text-align: center; padding: 46px 20px 8px; }
+.hero h1 { font-size: 34px; border: none; margin-bottom: 6px; }
+.hero p { color: var(--muted); max-width: 720px; margin: 8px auto; }
+.stats { display: flex; justify-content: center; gap: 34px; margin: 22px 0 4px; flex-wrap: wrap; }
+.stats div { text-align: center; }
+.stats b { display: block; font-size: 26px; color: var(--accent); }
+.stats span { font-size: 12.5px; color: var(--muted); }
+.cards {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px; padding: 26px 40px 10px; max-width: 1160px; margin: 0 auto;
+}
+.card {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+  padding: 20px 22px; transition: .15s; display: block; color: var(--text);
+}
+.card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px var(--shadow);
+  border-color: var(--accent); text-decoration: none; }
+.card .icon { font-size: 26px; }
+.card h3 { margin: 8px 0 4px; font-size: 17px; }
+.card p { margin: 0; color: var(--muted); font-size: 13px; }
+.notice {
+  max-width: 900px; margin: 26px auto; background: var(--panel);
+  border: 1px solid var(--border); border-radius: 12px; padding: 18px 26px; font-size: 14px;
+}
+.notice h3 { margin-top: 6px; }
+.notice code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px;
+  color: var(--inline-code); font-family: Consolas, monospace; }
+
+@media (max-width: 900px) {
+  .sidebar { display: none; }
+  .content { padding: 24px 18px 60px; }
+  .topbar .brand { display: none; }
+}
+
+pre { line-height: 125%; }
+td.linenos .normal { color: #666666; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: #666666; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #ffffcc }
+.codehilite { background: #f0f0f0; }
+.codehilite .c { color: #60A0B0; font-style: italic } /* Comment */
+.codehilite .err { border: 1px solid #F00 } /* Error */
+.codehilite .k { color: #007020; font-weight: bold } /* Keyword */
+.codehilite .o { color: #666 } /* Operator */
+.codehilite .ch { color: #60A0B0; font-style: italic } /* Comment.Hashbang */
+.codehilite .cm { color: #60A0B0; font-style: italic } /* Comment.Multiline */
+.codehilite .cp { color: #007020 } /* Comment.Preproc */
+.codehilite .cpf { color: #60A0B0; font-style: italic } /* Comment.PreprocFile */
+.codehilite .c1 { color: #60A0B0; font-style: italic } /* Comment.Single */
+.codehilite .cs { color: #60A0B0; background-color: #FFF0F0 } /* Comment.Special */
+.codehilite .gd { color: #A00000 } /* Generic.Deleted */
+.codehilite .ge { font-style: italic } /* Generic.Emph */
+.codehilite .ges { font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #F00 } /* Generic.Error */
+.codehilite .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+.codehilite .gi { color: #00A000 } /* Generic.Inserted */
+.codehilite .go { color: #888 } /* Generic.Output */
+.codehilite .gp { color: #C65D09; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+.codehilite .gt { color: #04D } /* Generic.Traceback */
+.codehilite .kc { color: #007020; font-weight: bold } /* Keyword.Constant */
+.codehilite .kd { color: #007020; font-weight: bold } /* Keyword.Declaration */
+.codehilite .kn { color: #007020; font-weight: bold } /* Keyword.Namespace */
+.codehilite .kp { color: #007020 } /* Keyword.Pseudo */
+.codehilite .kr { color: #007020; font-weight: bold } /* Keyword.Reserved */
+.codehilite .kt { color: #902000 } /* Keyword.Type */
+.codehilite .m { color: #40A070 } /* Literal.Number */
+.codehilite .s { color: #4070A0 } /* Literal.String */
+.codehilite .na { color: #4070A0 } /* Name.Attribute */
+.codehilite .nb { color: #007020 } /* Name.Builtin */
+.codehilite .nc { color: #0E84B5; font-weight: bold } /* Name.Class */
+.codehilite .no { color: #60ADD5 } /* Name.Constant */
+.codehilite .nd { color: #555; font-weight: bold } /* Name.Decorator */
+.codehilite .ni { color: #D55537; font-weight: bold } /* Name.Entity */
+.codehilite .ne { color: #007020 } /* Name.Exception */
+.codehilite .nf { color: #06287E } /* Name.Function */
+.codehilite .nl { color: #002070; font-weight: bold } /* Name.Label */
+.codehilite .nn { color: #0E84B5; font-weight: bold } /* Name.Namespace */
+.codehilite .nt { color: #062873; font-weight: bold } /* Name.Tag */
+.codehilite .nv { color: #BB60D5 } /* Name.Variable */
+.codehilite .ow { color: #007020; font-weight: bold } /* Operator.Word */
+.codehilite .w { color: #BBB } /* Text.Whitespace */
+.codehilite .mb { color: #40A070 } /* Literal.Number.Bin */
+.codehilite .mf { color: #40A070 } /* Literal.Number.Float */
+.codehilite .mh { color: #40A070 } /* Literal.Number.Hex */
+.codehilite .mi { color: #40A070 } /* Literal.Number.Integer */
+.codehilite .mo { color: #40A070 } /* Literal.Number.Oct */
+.codehilite .sa { color: #4070A0 } /* Literal.String.Affix */
+.codehilite .sb { color: #4070A0 } /* Literal.String.Backtick */
+.codehilite .sc { color: #4070A0 } /* Literal.String.Char */
+.codehilite .dl { color: #4070A0 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #4070A0; font-style: italic } /* Literal.String.Doc */
+.codehilite .s2 { color: #4070A0 } /* Literal.String.Double */
+.codehilite .se { color: #4070A0; font-weight: bold } /* Literal.String.Escape */
+.codehilite .sh { color: #4070A0 } /* Literal.String.Heredoc */
+.codehilite .si { color: #70A0D0; font-style: italic } /* Literal.String.Interpol */
+.codehilite .sx { color: #C65D09 } /* Literal.String.Other */
+.codehilite .sr { color: #235388 } /* Literal.String.Regex */
+.codehilite .s1 { color: #4070A0 } /* Literal.String.Single */
+.codehilite .ss { color: #517918 } /* Literal.String.Symbol */
+.codehilite .bp { color: #007020 } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #06287E } /* Name.Function.Magic */
+.codehilite .vc { color: #BB60D5 } /* Name.Variable.Class */
+.codehilite .vg { color: #BB60D5 } /* Name.Variable.Global */
+.codehilite .vi { color: #BB60D5 } /* Name.Variable.Instance */
+.codehilite .vm { color: #BB60D5 } /* Name.Variable.Magic */
+.codehilite .il { color: #40A070 } /* Literal.Number.Integer.Long */
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+html[data-theme="dark"] .codehilite .hll { background-color: #49483e }
+html[data-theme="dark"] .codehilite { background: #272822; color: #F8F8F2 }
+html[data-theme="dark"] .codehilite .c { color: #959077 } /* Comment */
+html[data-theme="dark"] .codehilite .err { color: #ED007E; background-color: #1E0010 } /* Error */
+html[data-theme="dark"] .codehilite .esc { color: #F8F8F2 } /* Escape */
+html[data-theme="dark"] .codehilite .g { color: #F8F8F2 } /* Generic */
+html[data-theme="dark"] .codehilite .k { color: #66D9EF } /* Keyword */
+html[data-theme="dark"] .codehilite .l { color: #AE81FF } /* Literal */
+html[data-theme="dark"] .codehilite .n { color: #F8F8F2 } /* Name */
+html[data-theme="dark"] .codehilite .o { color: #FF4689 } /* Operator */
+html[data-theme="dark"] .codehilite .x { color: #F8F8F2 } /* Other */
+html[data-theme="dark"] .codehilite .p { color: #F8F8F2 } /* Punctuation */
+html[data-theme="dark"] .codehilite .ch { color: #959077 } /* Comment.Hashbang */
+html[data-theme="dark"] .codehilite .cm { color: #959077 } /* Comment.Multiline */
+html[data-theme="dark"] .codehilite .cp { color: #959077 } /* Comment.Preproc */
+html[data-theme="dark"] .codehilite .cpf { color: #959077 } /* Comment.PreprocFile */
+html[data-theme="dark"] .codehilite .c1 { color: #959077 } /* Comment.Single */
+html[data-theme="dark"] .codehilite .cs { color: #959077 } /* Comment.Special */
+html[data-theme="dark"] .codehilite .gd { color: #FF4689 } /* Generic.Deleted */
+html[data-theme="dark"] .codehilite .ge { color: #F8F8F2; font-style: italic } /* Generic.Emph */
+html[data-theme="dark"] .codehilite .ges { color: #F8F8F2; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+html[data-theme="dark"] .codehilite .gr { color: #F8F8F2 } /* Generic.Error */
+html[data-theme="dark"] .codehilite .gh { color: #F8F8F2 } /* Generic.Heading */
+html[data-theme="dark"] .codehilite .gi { color: #A6E22E } /* Generic.Inserted */
+html[data-theme="dark"] .codehilite .go { color: #66D9EF } /* Generic.Output */
+html[data-theme="dark"] .codehilite .gp { color: #FF4689; font-weight: bold } /* Generic.Prompt */
+html[data-theme="dark"] .codehilite .gs { color: #F8F8F2; font-weight: bold } /* Generic.Strong */
+html[data-theme="dark"] .codehilite .gu { color: #959077 } /* Generic.Subheading */
+html[data-theme="dark"] .codehilite .gt { color: #F8F8F2 } /* Generic.Traceback */
+html[data-theme="dark"] .codehilite .kc { color: #66D9EF } /* Keyword.Constant */
+html[data-theme="dark"] .codehilite .kd { color: #66D9EF } /* Keyword.Declaration */
+html[data-theme="dark"] .codehilite .kn { color: #FF4689 } /* Keyword.Namespace */
+html[data-theme="dark"] .codehilite .kp { color: #66D9EF } /* Keyword.Pseudo */
+html[data-theme="dark"] .codehilite .kr { color: #66D9EF } /* Keyword.Reserved */
+html[data-theme="dark"] .codehilite .kt { color: #66D9EF } /* Keyword.Type */
+html[data-theme="dark"] .codehilite .ld { color: #E6DB74 } /* Literal.Date */
+html[data-theme="dark"] .codehilite .m { color: #AE81FF } /* Literal.Number */
+html[data-theme="dark"] .codehilite .s { color: #E6DB74 } /* Literal.String */
+html[data-theme="dark"] .codehilite .na { color: #A6E22E } /* Name.Attribute */
+html[data-theme="dark"] .codehilite .nb { color: #F8F8F2 } /* Name.Builtin */
+html[data-theme="dark"] .codehilite .nc { color: #A6E22E } /* Name.Class */
+html[data-theme="dark"] .codehilite .no { color: #66D9EF } /* Name.Constant */
+html[data-theme="dark"] .codehilite .nd { color: #A6E22E } /* Name.Decorator */
+html[data-theme="dark"] .codehilite .ni { color: #F8F8F2 } /* Name.Entity */
+html[data-theme="dark"] .codehilite .ne { color: #A6E22E } /* Name.Exception */
+html[data-theme="dark"] .codehilite .nf { color: #A6E22E } /* Name.Function */
+html[data-theme="dark"] .codehilite .nl { color: #F8F8F2 } /* Name.Label */
+html[data-theme="dark"] .codehilite .nn { color: #F8F8F2 } /* Name.Namespace */
+html[data-theme="dark"] .codehilite .nx { color: #A6E22E } /* Name.Other */
+html[data-theme="dark"] .codehilite .py { color: #F8F8F2 } /* Name.Property */
+html[data-theme="dark"] .codehilite .nt { color: #FF4689 } /* Name.Tag */
+html[data-theme="dark"] .codehilite .nv { color: #F8F8F2 } /* Name.Variable */
+html[data-theme="dark"] .codehilite .ow { color: #FF4689 } /* Operator.Word */
+html[data-theme="dark"] .codehilite .pm { color: #F8F8F2 } /* Punctuation.Marker */
+html[data-theme="dark"] .codehilite .w { color: #F8F8F2 } /* Text.Whitespace */
+html[data-theme="dark"] .codehilite .mb { color: #AE81FF } /* Literal.Number.Bin */
+html[data-theme="dark"] .codehilite .mf { color: #AE81FF } /* Literal.Number.Float */
+html[data-theme="dark"] .codehilite .mh { color: #AE81FF } /* Literal.Number.Hex */
+html[data-theme="dark"] .codehilite .mi { color: #AE81FF } /* Literal.Number.Integer */
+html[data-theme="dark"] .codehilite .mo { color: #AE81FF } /* Literal.Number.Oct */
+html[data-theme="dark"] .codehilite .sa { color: #E6DB74 } /* Literal.String.Affix */
+html[data-theme="dark"] .codehilite .sb { color: #E6DB74 } /* Literal.String.Backtick */
+html[data-theme="dark"] .codehilite .sc { color: #E6DB74 } /* Literal.String.Char */
+html[data-theme="dark"] .codehilite .dl { color: #E6DB74 } /* Literal.String.Delimiter */
+html[data-theme="dark"] .codehilite .sd { color: #E6DB74 } /* Literal.String.Doc */
+html[data-theme="dark"] .codehilite .s2 { color: #E6DB74 } /* Literal.String.Double */
+html[data-theme="dark"] .codehilite .se { color: #AE81FF } /* Literal.String.Escape */
+html[data-theme="dark"] .codehilite .sh { color: #E6DB74 } /* Literal.String.Heredoc */
+html[data-theme="dark"] .codehilite .si { color: #E6DB74 } /* Literal.String.Interpol */
+html[data-theme="dark"] .codehilite .sx { color: #E6DB74 } /* Literal.String.Other */
+html[data-theme="dark"] .codehilite .sr { color: #E6DB74 } /* Literal.String.Regex */
+html[data-theme="dark"] .codehilite .s1 { color: #E6DB74 } /* Literal.String.Single */
+html[data-theme="dark"] .codehilite .ss { color: #E6DB74 } /* Literal.String.Symbol */
+html[data-theme="dark"] .codehilite .bp { color: #F8F8F2 } /* Name.Builtin.Pseudo */
+html[data-theme="dark"] .codehilite .fm { color: #A6E22E } /* Name.Function.Magic */
+html[data-theme="dark"] .codehilite .vc { color: #F8F8F2 } /* Name.Variable.Class */
+html[data-theme="dark"] .codehilite .vg { color: #F8F8F2 } /* Name.Variable.Global */
+html[data-theme="dark"] .codehilite .vi { color: #F8F8F2 } /* Name.Variable.Instance */
+html[data-theme="dark"] .codehilite .vm { color: #F8F8F2 } /* Name.Variable.Magic */
+html[data-theme="dark"] .codehilite .il { color: #AE81FF } /* Literal.Number.Integer.Long */</style>
+</head>
+<body>
+<div id="progress"></div>
+<header class="topbar">
+  <span class="brand">&#128218; AI 时代计算机基础</span>
+  <nav>
+    <a href="index.html">首页</a>
+    <a href="01-digital.html">数字电子技术</a>
+    <a href="02-analog.html">模拟电子技术</a>
+    <a href="03-organization.html">计算机组成原理</a>
+    <a href="04-architecture.html">计算机体系结构</a>
+    <a href="05-data-structures.html">数据结构</a>
+    <a href="06-algorithms.html">算法设计与分析</a>
+    <a class="active" href="07-os.html">操作系统</a>
+  </nav>
+  <button class="tb-btn" onclick="openSearch()">&#128269; 搜索 <kbd>Ctrl K</kbd></button>
+  <button class="tb-btn" id="themeBtn" onclick="toggleTheme()">&#9789; 暗色</button>
+</header>
+<div id="searchMask" onclick="if(event.target===this)closeSearch()">
+  <div id="searchBox">
+    <input id="searchInput" placeholder="搜索章节标题或课程名 ..." oninput="renderSR(this.value)" autocomplete="off">
+    <div id="searchResults"></div>
+  </div>
+</div>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="toc-title">本页目录</div>
+    <div class="toc">
+<ul>
+<li><a href="#0-ai">0. AI 时代为什么还要学操作系统</a></li>
+<li><a href="#1">1. 操作系统概述</a><ul>
+<li><a href="#_2">知识要点</a></li>
+<li><a href="#_3">关键概念精讲</a></li>
+<li><a href="#_4">案例代码：观察系统调用与切换开销</a></li>
+</ul>
+</li>
+<li><a href="#2">2. 进程与线程</a><ul>
+<li><a href="#_5">知识要点</a></li>
+<li><a href="#_6">关键概念精讲</a></li>
+<li><a href="#gil-cpu-io">案例代码：GIL 下线程对 CPU 密集与 I/O 密集任务的差异</a></li>
+</ul>
+</li>
+<li><a href="#3-cpu">3. CPU 调度</a><ul>
+<li><a href="#_7">知识要点</a></li>
+<li><a href="#_8">关键概念精讲</a></li>
+<li><a href="#fcfs-sjf-rr">案例代码：FCFS / SJF / RR 三种调度的周转与等待时间对比</a></li>
+</ul>
+</li>
+<li><a href="#4">4. 进程同步与互斥</a><ul>
+<li><a href="#_9">知识要点</a></li>
+<li><a href="#_10">关键概念精讲</a></li>
+<li><a href="#_11">案例代码：竞争条件复现与加锁修复</a></li>
+</ul>
+</li>
+<li><a href="#5">5. 死锁</a><ul>
+<li><a href="#_12">知识要点</a></li>
+<li><a href="#_13">关键概念精讲</a></li>
+<li><a href="#_14">案例代码：银行家算法安全性检查（精简版）</a></li>
+</ul>
+</li>
+<li><a href="#6">6. 内存管理</a><ul>
+<li><a href="#_15">知识要点</a></li>
+<li><a href="#_16">关键概念精讲</a></li>
+<li><a href="#tlb">案例代码：分页地址翻译模拟（含 TLB）</a></li>
+</ul>
+</li>
+<li><a href="#7">7. 虚拟内存与页面置换</a><ul>
+<li><a href="#_17">知识要点</a></li>
+<li><a href="#_18">关键概念精讲</a></li>
+<li><a href="#fifo-lru-belady">案例代码：FIFO 与 LRU 缺页对比 + Belady 异常复现</a></li>
+</ul>
+</li>
+<li><a href="#8">8. 文件系统</a><ul>
+<li><a href="#_19">知识要点</a></li>
+<li><a href="#_20">关键概念精讲</a></li>
+<li><a href="#fcfs-sstf-scan">案例代码：磁盘调度 FCFS / SSTF / SCAN 寻道距离对比</a></li>
+</ul>
+</li>
+<li><a href="#9-io">9. I/O 与设备管理</a><ul>
+<li><a href="#_21">知识要点</a></li>
+<li><a href="#_22">关键概念精讲</a></li>
+<li><a href="#vs">案例代码：用户态缓冲的威力——缓冲写 vs 直通系统调用写</a></li>
+</ul>
+</li>
+<li><a href="#_23">扩展知识点</a><ul>
+<li><a href="#cgroups">容器与命名空间、cgroups</a></li>
+<li><a href="#gpu">GPU 显存管理与统一内存</a></li>
+<li><a href="#pagedattention-vllm">PagedAttention 与 vLLM 的分页思想</a></li>
+</ul>
+</li>
+<li><a href="#_24">练习与思考题</a></li>
+<li><a href="#_25">参考资料</a></li>
+</ul>
+</div>
+
+  </aside>
+  <main class="content">
+    <h1 id="_1">操作系统</h1>
+<blockquote>
+<p>操作系统是硬件与应用之间的"总管家"：它把一块裸机抽象成进程、地址空间和文件，让成百上千个程序安全地共享同一套 CPU、内存和磁盘。</p>
+</blockquote>
+<h2 id="0-ai">0. AI 时代为什么还要学操作系统</h2>
+<p>有同学会问：我写的是 PyTorch，跑的是云上容器，为什么还要学几十年前的操作系统理论？</p>
+<p>第一，<strong>大模型工程的瓶颈大都是操作系统问题</strong>。GPU 显存不够用，本质是内存管理问题——vLLM 的 PagedAttention 直接照搬了虚拟内存分页的思想，把 KV-cache 切成固定大小的块按需分配，显存利用率从约 40% 提到 90% 以上；千卡集群训练大模型，调度器要决定哪个任务上哪块卡、怎么抢占、怎么容错，这就是 CPU 调度理论在数据中心尺度的放大；CUDA stream 的异步执行、计算与通信重叠，背后是 I/O 并发与缓冲的经典套路。</p>
+<p>第二，<strong>容器化部署就是操作系统机制的直接应用</strong>。Docker 不是虚拟机，它靠 Linux 的 namespace 做隔离、cgroups 做资源限额、联合文件系统做镜像分层——不懂进程、文件系统和内存配额，排查"容器里 OOM 被杀"这类问题时只能干瞪眼。</p>
+<p>第三，<strong>性能调优的语言是操作系统的语言</strong>。上下文切换太频繁、缺页率飙升、锁竞争激烈、磁盘 I/O 打满——性能分析工具吐出的每一个指标，都对应本课的一章。AI 能帮你写代码，但"这个服务为什么 p99 延迟抖动"的判断，依赖你对进程、内存、I/O 全链路的理解。操作系统是所有上层软件共同的地基。</p>
+<hr />
+<h2 id="1">1. 操作系统概述</h2>
+<h3 id="_2">知识要点</h3>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>含义</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>操作系统</td>
+<td>管理硬件资源、为应用提供服务的系统软件</td>
+<td>资源管理器 + 扩展机器</td>
+</tr>
+<tr>
+<td>内核态 / 用户态</td>
+<td>CPU 的两种特权级别</td>
+<td>内核态可执行特权指令</td>
+</tr>
+<tr>
+<td>系统调用</td>
+<td>用户程序请求内核服务的唯一入口</td>
+<td><code>read</code> / <code>write</code> / <code>fork</code> 等</td>
+</tr>
+<tr>
+<td>中断 / 异常</td>
+<td>打断当前执行流的事件</td>
+<td>中断来自外设，异常来自指令本身</td>
+</tr>
+<tr>
+<td>宏内核 / 微内核</td>
+<td>内核功能的组织方式</td>
+<td>Linux 是宏内核，QNX 是微内核</td>
+</tr>
+</tbody>
+</table>
+<p>操作系统发展脉络（每一步都由"资源利用率"驱动）：</p>
+<ul>
+<li><strong>手工操作</strong>（1940s）：程序员独占机器，插纸带、拨开关，CPU 大量空转</li>
+<li><strong>批处理</strong>（1950s）：作业成批装入，监控程序自动串行运行，但 I/O 时 CPU 仍空等</li>
+<li><strong>多道程序</strong>（1960s）：内存同时驻留多个作业，一个等 I/O 时切换到另一个，CPU 利用率大幅提升——这是现代操作系统的起点</li>
+<li><strong>分时系统</strong>（1970s）：按时间片轮流服务多个终端用户，响应时间成为新指标（UNIX 诞生）</li>
+<li><strong>现代</strong>：个人机（Windows/macOS）、移动（Android/iOS）、服务器与云（Linux 一统天下）、实时与嵌入式（车控、机器人）</li>
+</ul>
+<h3 id="_3">关键概念精讲</h3>
+<p><strong>为什么要区分内核态与用户态</strong>。如果任何程序都能直接操作页表、访问任意物理内存、屏蔽中断，那么一个 bug 或一段恶意代码就能让整台机器崩溃。CPU 硬件提供特权级（x86 的 Ring 0 / Ring 3，RISC-V 的 M/S/U 模式），把"危险指令"限制在内核态执行。用户程序想读文件、创建进程，必须通过<strong>系统调用</strong>这扇受控的门进入内核：执行陷入指令（x86 的 <code>syscall</code>）→ CPU 切到内核态并跳到固定入口 → 内核按系统调用号查表分发 → 执行服务例程 → 恢复现场返回用户态。一次系统调用的代价（微秒级）远高于普通函数调用（纳秒级），这就是高性能程序要"减少系统调用次数"（如用缓冲把多次小写合并成一次大写）的原因。</p>
+<p><strong>库函数与系统调用的关系</strong>。<code>printf</code> 是 C 库函数，它在用户态拼好字符串、写入缓冲区，最终调用系统调用 <code>write</code> 才真正进入内核。Python 的 <code>open()</code>、<code>os.read()</code> 同理——语言运行库是壳，系统调用是核。</p>
+<p><strong>宏内核 vs 微内核</strong>。宏内核把进程管理、内存管理、文件系统、驱动全部放进内核态，模块间函数直呼、性能高，但一个驱动崩溃可能拖垮整个内核（Linux、传统 UNIX）。微内核只保留最基本的 IPC、调度和内存管理，文件系统与驱动作为用户态服务进程运行，靠消息传递通信，隔离性好但通信开销大（Mach、QNX、鸿蒙微内核）。工程现实是混合路线：Windows NT 与 macOS 的 XNU 都是"宏内核骨架 + 微内核思想"。</p>
+<p>下图展示了用户态程序经系统调用陷入内核的完整路径：特权级切换发生在陷入指令处，内核完成服务后原路返回。</p>
+<p><svg viewBox="0 0 680 260" width="100%" role="img" aria-label="系统调用的用户态内核态切换路径">
+  <text x="10" y="20" fill="var(--text)" font-size="14" font-weight="bold">系统调用路径：用户态 → 内核态 → 用户态</text>
+  <rect x="20" y="40" width="640" height="80" fill="var(--panel)" stroke="var(--text)" stroke-width="1.5" rx="6"/>
+  <text x="30" y="60" fill="var(--muted)" font-size="12">用户态（Ring 3）</text>
+  <rect x="20" y="150" width="640" height="80" fill="var(--panel)" stroke="var(--text)" stroke-width="1.5" rx="6"/>
+  <text x="30" y="170" fill="var(--muted)" font-size="12">内核态（Ring 0）</text>
+  <rect x="50" y="70" width="130" height="36" fill="var(--accent)" rx="4"/>
+  <text x="115" y="93" fill="#fff" font-size="12" text-anchor="middle">应用: print(...)</text>
+  <rect x="230" y="70" width="150" height="36" fill="var(--panel)" stroke="var(--text)" rx="4"/>
+  <text x="305" y="88" fill="var(--text)" font-size="12" text-anchor="middle">库函数 write()</text>
+  <text x="305" y="101" fill="var(--muted)" font-size="10" text-anchor="middle">装入调用号, 执行 syscall</text>
+  <rect x="230" y="180" width="150" height="36" fill="var(--panel)" stroke="var(--text)" rx="4"/>
+  <text x="305" y="198" fill="var(--text)" font-size="12" text-anchor="middle">陷入处理入口</text>
+  <text x="305" y="211" fill="var(--muted)" font-size="10" text-anchor="middle">保存现场, 查系统调用表</text>
+  <rect x="440" y="180" width="150" height="36" fill="var(--accent)" rx="4"/>
+  <text x="515" y="198" fill="#fff" font-size="12" text-anchor="middle">sys_write 服务例程</text>
+  <text x="515" y="211" fill="#fff" font-size="10" text-anchor="middle">真正操作设备/缓冲</text>
+  <rect x="440" y="70" width="150" height="36" fill="var(--panel)" stroke="var(--text)" rx="4"/>
+  <text x="515" y="93" fill="var(--text)" font-size="12" text-anchor="middle">返回用户程序继续执行</text>
+  <g stroke="var(--text)" stroke-width="1.6" fill="none">
+    <line x1="180" y1="88" x2="228" y2="88"/>
+    <line x1="305" y1="106" x2="305" y2="178"/>
+    <line x1="380" y1="198" x2="438" y2="198"/>
+    <line x1="515" y1="178" x2="515" y2="108"/>
+  </g>
+  <g fill="var(--text)">
+    <polygon points="228,88 220,84 220,92"/>
+    <polygon points="305,178 301,170 309,170"/>
+    <polygon points="438,198 430,194 430,202"/>
+    <polygon points="515,108 511,116 519,116"/>
+  </g>
+  <text x="315" y="145" fill="var(--accent)" font-size="11">陷入(trap): 切到内核态</text>
+  <text x="525" y="145" fill="var(--accent)" font-size="11">iret: 切回用户态</text>
+</svg></p>
+<h3 id="_4">案例代码：观察系统调用与切换开销</h3>
+<div class="codewrap"><div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">syscall_demo</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;os 模块的函数大多直接对应系统调用。&quot;&quot;&quot;</span>
+    <span class="n">pid</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">()</span>                       <span class="c1"># 系统调用 getpid</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;当前进程 PID = </span><span class="si">{</span><span class="n">pid</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">fd</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;tmp_syscall.txt&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">O_CREAT</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">O_WRONLY</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">O_TRUNC</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="sa">b</span><span class="s2">&quot;written by raw syscall</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>   <span class="c1"># 系统调用 write：无用户态缓冲</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;tmp_syscall.txt&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>      <span class="c1"># open/read 也是系统调用的封装</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;读回内容:&quot;</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;tmp_syscall.txt&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">overhead_demo</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;实测：系统调用（哪怕最轻的 getpid）比普通函数调用慢一个数量级以上。&quot;&quot;&quot;</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="mi">100_000</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">plain</span><span class="p">():</span>                            <span class="c1"># 普通用户态函数</span>
+        <span class="k">return</span> <span class="mi">42</span>
+
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+        <span class="n">plain</span><span class="p">()</span>
+    <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">()</span>                         <span class="c1"># 每次都要陷入内核再返回</span>
+    <span class="n">t2</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">N</span><span class="si">}</span><span class="s2"> 次普通函数调用: </span><span class="si">{</span><span class="p">(</span><span class="n">t1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">t0</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1000</span><span class="si">:</span><span class="s2">8.2f</span><span class="si">}</span><span class="s2"> ms&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">N</span><span class="si">}</span><span class="s2"> 次 getpid 系统调用: </span><span class="si">{</span><span class="p">(</span><span class="n">t2</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">t1</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1000</span><span class="si">:</span><span class="s2">6.2f</span><span class="si">}</span><span class="s2"> ms  &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;(约 </span><span class="si">{</span><span class="p">(</span><span class="n">t2</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">t1</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="n">t1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">t0</span><span class="p">)</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> 倍)&quot;</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">syscall_demo</span><span class="p">()</span>
+    <span class="n">overhead_demo</span><span class="p">()</span>
+</code></pre></div><div class="code-tools"><button onclick="runCode(this,1)" title="可运行，但含性能测试或大规模循环，浏览器中较慢">&#9654; 运行 &#9203;</button><button onclick="copyCode(this)">&#128203; 复制</button></div></div><div class="run-out"></div>
+
+<p>运行可见系统调用显著慢于普通函数调用——理解这个开销，就理解了"为什么标准库要做用户态缓冲""为什么高并发框架要用批量系统调用（如 <code>io_uring</code>）"。</p>
+<hr />
+<h2 id="2">2. 进程与线程</h2>
+<h3 id="_5">知识要点</h3>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>含义</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>进程</td>
+<td>程序的一次运行实例，资源分配的基本单位</td>
+<td>独立地址空间</td>
+</tr>
+<tr>
+<td>线程</td>
+<td>进程内的执行流，CPU 调度的基本单位</td>
+<td>共享进程地址空间</td>
+</tr>
+<tr>
+<td>PCB</td>
+<td>进程控制块，内核中描述进程的数据结构</td>
+<td>PID、状态、寄存器、页表指针等</td>
+</tr>
+<tr>
+<td>上下文切换</td>
+<td>保存旧进程现场、装入新进程现场</td>
+<td>微秒级开销 + 缓存/TLB 失效</td>
+</tr>
+<tr>
+<td>协程</td>
+<td>用户态自行调度的轻量执行流</td>
+<td>切换纳秒级，不需内核参与</td>
+</tr>
+</tbody>
+</table>
+<p>进程五状态模型：<strong>创建 → 就绪 ⇄ 运行 → 终止</strong>，运行中等待事件则进入<strong>阻塞</strong>，事件完成回到就绪。三条关键转换：就绪→运行（被调度选中）、运行→就绪（时间片用完或被抢占）、运行→阻塞（主动等待 I/O 或锁）。注意：阻塞不能直接变运行，必须先回就绪队列排队。</p>
+<table>
+<thead>
+<tr>
+<th>对比项</th>
+<th>进程</th>
+<th>线程</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>地址空间</td>
+<td>独立</td>
+<td>同进程内共享</td>
+</tr>
+<tr>
+<td>通信方式</td>
+<td>管道 / 消息队列 / 共享内存 / socket</td>
+<td>直接读写共享变量（需同步）</td>
+</tr>
+<tr>
+<td>创建与切换开销</td>
+<td>大（复制页表等）</td>
+<td>小（只换寄存器和栈）</td>
+</tr>
+<tr>
+<td>一个崩溃的影响</td>
+<td>不影响其他进程</td>
+<td>整个进程一起崩</td>
+</tr>
+<tr>
+<td>典型应用</td>
+<td>浏览器每个标签页一个进程</td>
+<td>Web 服务器一个连接一个线程</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_6">关键概念精讲</h3>
+<p><strong>PCB 是进程存在的唯一标志</strong>。内核为每个进程维护一个 PCB（Linux 中是 <code>task_struct</code>），存放：标识信息（PID、父进程、用户）、现场信息（通用寄存器、程序计数器、栈指针）、控制信息（状态、优先级、已用 CPU 时间）、资源清单（页表基址、打开文件表、信号处理表）。所谓"上下文切换"，就是把 CPU 寄存器当前值存进旧进程 PCB、再从新进程 PCB 装入——进程本身对此毫无感知，这正是"每个进程都以为自己独占 CPU"这一抽象的实现手法。</p>
+<p><strong>上下文切换的真实代价</strong>不止保存恢复寄存器那几微秒：切换后 CPU 高速缓存里是别人的数据（冷缓存）、TLB 里是别人的页表项（需重填）、分支预测器也要重新训练。因此高性能服务会用 CPU 亲和性把线程钉在固定核上，减少无谓迁移。</p>
+<p><strong>线程为什么轻</strong>。同进程的线程共享代码段、数据段、堆和打开的文件，只有栈和寄存器私有。切换线程不需要换页表（地址空间不变），TLB 不用刷，开销只有进程切换的几分之一。</p>
+<p><strong>协程再轻一个数量级</strong>。协程的调度完全在用户态完成——本质上只是"换一下栈指针和几个寄存器"的函数跳转，纳秒级。Python 的 <code>async/await</code>、Go 的 goroutine 都是协程：单线程可以跑几十万个协程，靠"遇到 I/O 主动让出"实现并发。代价是协程内不能执行阻塞式系统调用（会卡住整个线程），所以配套需要异步 I/O。</p>
+<p><strong>Python 的 GIL</strong>。CPython 的全局解释器锁保证同一时刻只有一个线程执行字节码，所以 Python 多线程对 CPU 密集任务没有加速（甚至更慢），但 I/O 密集任务仍然有效——线程在等 I/O 时会释放 GIL。CPU 密集要并行，用 <code>multiprocessing</code> 多进程绕开 GIL。</p>
+<p>下图展示了进程五状态转换：只有三条边与调度器直接相关（派遣、时间片到、等待事件），阻塞态必须经过就绪态才能再次运行。</p>
+<div class="mermaid">stateDiagram-v2
+    direction LR
+    [*] --> 创建
+    创建 --> 就绪: 初始化完成, 进入就绪队列
+    就绪 --> 运行: 被调度器选中(派遣)
+    运行 --> 就绪: 时间片用完 / 被高优先级抢占
+    运行 --> 阻塞: 等待 I/O、锁或事件
+    阻塞 --> 就绪: 等待的事件完成
+    运行 --> 终止: 正常退出 / 被杀死
+    终止 --> [*]
+</div>
+
+<h3 id="gil-cpu-io">案例代码：GIL 下线程对 CPU 密集与 I/O 密集任务的差异</h3>
+<div class="codewrap"><div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">cpu_task</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">2_000_00</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;CPU 密集：纯计算，全程握着 GIL。&quot;&quot;&quot;</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">+=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">i</span>
+    <span class="k">return</span> <span class="n">s</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">io_task</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;I/O 密集：sleep 模拟等待网络/磁盘，等待期间释放 GIL。&quot;&quot;&quot;</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">bench</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">n_threads</span><span class="p">,</span> <span class="n">label</span><span class="p">):</span>
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+    <span class="n">threads</span> <span class="o">=</span> <span class="p">[</span><span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">task</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_threads</span><span class="p">)]</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">threads</span><span class="p">:</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">threads</span><span class="p">:</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">t0</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1000</span><span class="si">:</span><span class="s2">7.1f</span><span class="si">}</span><span class="s2"> ms&quot;</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;--- CPU 密集任务 x4 ---&quot;</span><span class="p">)</span>
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+        <span class="n">cpu_task</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;单线程顺序执行: </span><span class="si">{</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">t0</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1000</span><span class="si">:</span><span class="s2">7.1f</span><span class="si">}</span><span class="s2"> ms&quot;</span><span class="p">)</span>
+    <span class="n">bench</span><span class="p">(</span><span class="n">cpu_task</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="s2">&quot;4 线程并发执行&quot;</span><span class="p">)</span>     <span class="c1"># GIL 限制，不会更快</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;--- I/O 密集任务 x4 ---&quot;</span><span class="p">)</span>
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+        <span class="n">io_task</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;单线程顺序执行: </span><span class="si">{</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">t0</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1000</span><span class="si">:</span><span class="s2">7.1f</span><span class="si">}</span><span class="s2"> ms&quot;</span><span class="p">)</span>
+    <span class="n">bench</span><span class="p">(</span><span class="n">io_task</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="s2">&quot;4 线程并发执行&quot;</span><span class="p">)</span>      <span class="c1"># 等待重叠，约缩短为 1/4</span>
+</code></pre></div><div class="code-tools"><button class="blocked" disabled title="浏览器 Python（Pyodide）不支持多线程，请下载到本地运行">&#9654; 仅本地可运行</button><button onclick="copyCode(this)">&#128203; 复制</button></div></div>
+
+<p>实测结论：CPU 密集任务 4 线程与单线程耗时相当（GIL 串行化），I/O 密集任务 4 线程约为单线程的四分之一（等待时间重叠）。这就是"Python 多线程适合 I/O 密集、多进程适合 CPU 密集"的实验依据。</p>
+<hr />
+<h2 id="3-cpu">3. CPU 调度</h2>
+<h3 id="_7">知识要点</h3>
+<p>调度发生的时机：进程从运行→阻塞（主动让出）、运行→终止、运行→就绪（抢占）、阻塞→就绪（可能触发抢占）。只在前两种时机调度的叫<strong>非抢占式</strong>，四种都调度的叫<strong>抢占式</strong>。</p>
+<p>评价指标（对同一批进程）：</p>
+<ul>
+<li><code>周转时间 = 完成时间 - 到达时间</code>（作业从提交到完成的总耗时）</li>
+<li><code>等待时间 = 周转时间 - 运行时间</code>（在就绪队列里干等的时间）</li>
+<li><code>响应时间 = 首次上 CPU 时间 - 到达时间</code>（交互系统最关心）</li>
+<li>吞吐量：单位时间完成的进程数；CPU 利用率：CPU 忙的时间占比</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>算法</th>
+<th>策略</th>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FCFS</td>
+<td>按到达顺序</td>
+<td>简单公平</td>
+<td>短作业被长作业拖累（护航效应）</td>
+</tr>
+<tr>
+<td>SJF</td>
+<td>选运行时间最短</td>
+<td>平均等待时间理论最优</td>
+<td>需预知运行时间；长作业饥饿</td>
+</tr>
+<tr>
+<td>SRTF</td>
+<td>SJF 的抢占版</td>
+<td>平均周转更优</td>
+<td>切换开销大；同样饥饿</td>
+</tr>
+<tr>
+<td>RR</td>
+<td>按时间片轮转</td>
+<td>响应快、公平</td>
+<td>时间片难选：太大退化为 FCFS，太小切换开销占比过高</td>
+</tr>
+<tr>
+<td>优先级</td>
+<td>选优先级最高</td>
+<td>区分轻重缓急</td>
+<td>低优先级饥饿（解法：老化 aging）</td>
+</tr>
+<tr>
+<td>MLFQ</td>
+<td>多级队列 + 降级反馈</td>
+<td>兼顾响应与周转，无需预知运行时间</td>
+<td>参数多，可被"耍时间片"策略欺骗</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_8">关键概念精讲</h3>
+<p><strong>SJF 为什么最优</strong>。把短作业排在长作业前面，会减少后面所有作业的等待，总等待时间必然下降——交换论证可以严格证明非抢占场景下 SJF 平均等待时间最小。工程问题是运行时间未知，实际系统用<strong>指数平均</strong>预测：<code>预测值 = a * 上次实际值 + (1 - a) * 上次预测值</code>，这也是 TCP 估计 RTT 的公式。</p>
+<p><strong>RR 的时间片怎么选</strong>。经验值 10~100ms：要保证约 80% 的 CPU 突发能在一个时间片内跑完，同时切换开销（约几微秒）占比可忽略。时间片 4ms、切换 1ms，则 20% 的 CPU 时间浪费在切换上——不可接受。</p>
+<p><strong>MLFQ 是通用操作系统的现实答案</strong>。规则：新进程进最高优先级队列（时间片最短）；用完整个时间片说明是 CPU 密集型，降一级（时间片翻倍）；在时间片内主动阻塞说明是交互型，留在原级。效果：交互进程始终在高优先级队列享受快速响应，批处理进程沉到底层队列用长时间片减少切换。再加上定期"全部提升回顶层"防饥饿。Windows 与 Linux 的 CFS 之前的 O(1) 调度器都是这个思路的变体。</p>
+<p><strong>实时调度</strong>用于"迟到即错误"的场景（刹车控制、音频采样）。速率单调（RM）：周期越短优先级越高，静态分配；最早截止期优先（EDF）：动态选截止期最近的任务，可以把 CPU 利用率用到 100%，但超载时行为不可控。</p>
+<p>下图展示了 4 个进程在 RR（时间片 q=2）下的执行时序甘特图，进程条上的数字为起止时刻。P1 被切成四段，响应时间很短（0 时刻即上 CPU），但完成时间被拖到最后——这是 RR "牺牲周转换响应"的直观体现。</p>
+<p><svg viewBox="0 0 680 250" width="100%" role="img" aria-label="RR时间片轮转调度甘特图">
+  <text x="10" y="20" fill="var(--text)" font-size="14" font-weight="bold">RR (q=2) 调度甘特图：P1(0,7) P2(2,4) P3(4,1) P4(5,4)</text>
+  <g font-size="12" fill="var(--muted)" text-anchor="end">
+    <text x="58" y="64">P1</text><text x="58" y="104">P2</text>
+    <text x="58" y="144">P3</text><text x="58" y="184">P4</text>
+  </g>
+  <g stroke="var(--border)" stroke-width="1" stroke-dasharray="2 4">
+    <line x1="70" y1="40" x2="70" y2="195"/><line x1="145" y1="40" x2="145" y2="195"/>
+    <line x1="220" y1="40" x2="220" y2="195"/><line x1="295" y1="40" x2="295" y2="195"/>
+    <line x1="370" y1="40" x2="370" y2="195"/><line x1="445" y1="40" x2="445" y2="195"/>
+    <line x1="520" y1="40" x2="520" y2="195"/><line x1="595" y1="40" x2="595" y2="195"/>
+    <line x1="670" y1="40" x2="670" y2="195"/>
+  </g>
+  <g font-size="11" fill="var(--muted)" text-anchor="middle">
+    <text x="70" y="212">0</text><text x="145" y="212">2</text><text x="220" y="212">4</text>
+    <text x="295" y="212">6</text><text x="370" y="212">8</text><text x="445" y="212">10</text>
+    <text x="520" y="212">12</text><text x="595" y="212">14</text><text x="670" y="212">16</text>
+  </g>
+  <g>
+    <rect x="70" y="48" width="75" height="22" fill="var(--accent)" rx="3"/>
+    <rect x="220" y="48" width="75" height="22" fill="var(--accent)" rx="3"/>
+    <rect x="482" y="48" width="75" height="22" fill="var(--accent)" rx="3"/>
+    <rect x="632" y="48" width="38" height="22" fill="var(--accent)" rx="3"/>
+    <rect x="145" y="88" width="75" height="22" fill="var(--panel)" stroke="var(--text)" rx="3"/>
+    <rect x="332" y="88" width="75" height="22" fill="var(--panel)" stroke="var(--text)" rx="3"/>
+    <rect x="295" y="128" width="37" height="22" fill="var(--panel)" stroke="var(--text)" rx="3"/>
+    <rect x="407" y="168" width="75" height="22" fill="var(--panel)" stroke="var(--text)" rx="3"/>
+    <rect x="557" y="168" width="75" height="22" fill="var(--panel)" stroke="var(--text)" rx="3"/>
+  </g>
+  <g font-size="10" fill="var(--text)" text-anchor="middle">
+    <text x="107" y="63" fill="#fff">0-2</text><text x="257" y="63" fill="#fff">4-6</text>
+    <text x="519" y="63" fill="#fff">11-13</text><text x="651" y="63" fill="#fff">15-16</text>
+    <text x="182" y="103">2-4</text><text x="369" y="103">7-9</text>
+    <text x="313" y="143">6-7</text>
+    <text x="444" y="183">9-11</text><text x="594" y="183">13-15</text>
+  </g>
+  <text x="70" y="235" fill="var(--muted)" font-size="11">P3 只需 1 个单位，6 时刻上车 7 时刻完成；P1 最长，四段拼完拖到 16。</text>
+</svg></p>
+<h3 id="fcfs-sjf-rr">案例代码：FCFS / SJF / RR 三种调度的周转与等待时间对比</h3>
+<div class="codewrap"><div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">deque</span>
+
+<span class="c1"># 进程: (名字, 到达时间, 运行时间)</span>
+<span class="n">PROCS</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">&quot;P1&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;P2&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;P3&quot;</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;P4&quot;</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">)]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">fcfs</span><span class="p">(</span><span class="n">procs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;先来先服务。返回 {进程名: 完成时间}。&quot;&quot;&quot;</span>
+    <span class="n">t</span><span class="p">,</span> <span class="n">finish</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">arrive</span><span class="p">,</span> <span class="n">burst</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">procs</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">arrive</span><span class="p">)</span> <span class="o">+</span> <span class="n">burst</span>
+        <span class="n">finish</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span>
+    <span class="k">return</span> <span class="n">finish</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">sjf</span><span class="p">(</span><span class="n">procs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;非抢占短作业优先。&quot;&quot;&quot;</span>
+    <span class="n">pending</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">procs</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">t</span><span class="p">,</span> <span class="n">finish</span><span class="p">,</span> <span class="n">ready</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="p">{},</span> <span class="p">[]</span>
+    <span class="k">while</span> <span class="n">pending</span> <span class="ow">or</span> <span class="n">ready</span><span class="p">:</span>
+        <span class="k">while</span> <span class="n">pending</span> <span class="ow">and</span> <span class="n">pending</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">t</span><span class="p">:</span>
+            <span class="n">ready</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pending</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ready</span><span class="p">:</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">pending</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">continue</span>
+        <span class="n">ready</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>          <span class="c1"># 选运行时间最短者</span>
+        <span class="n">name</span><span class="p">,</span> <span class="n">arrive</span><span class="p">,</span> <span class="n">burst</span> <span class="o">=</span> <span class="n">ready</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">t</span> <span class="o">+=</span> <span class="n">burst</span>
+        <span class="n">finish</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span>
+    <span class="k">return</span> <span class="n">finish</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">rr</span><span class="p">(</span><span class="n">procs</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;时间片轮转，时间片 q。&quot;&quot;&quot;</span>
+    <span class="n">pending</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">procs</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">remain</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">burst</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">burst</span> <span class="ow">in</span> <span class="n">procs</span><span class="p">}</span>
+    <span class="n">t</span><span class="p">,</span> <span class="n">finish</span><span class="p">,</span> <span class="n">queue</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="p">{},</span> <span class="n">deque</span><span class="p">()</span>
+    <span class="k">while</span> <span class="n">pending</span> <span class="ow">or</span> <span class="n">queue</span><span class="p">:</span>
+        <span class="k">while</span> <span class="n">pending</span> <span class="ow">and</span> <span class="n">pending</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">t</span><span class="p">:</span>
+            <span class="n">queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pending</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">queue</span><span class="p">:</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">pending</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">continue</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">popleft</span><span class="p">()</span>
+        <span class="n">run</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">remain</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
+        <span class="n">t</span> <span class="o">+=</span> <span class="n">run</span>
+        <span class="n">remain</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">-=</span> <span class="n">run</span>
+        <span class="k">while</span> <span class="n">pending</span> <span class="ow">and</span> <span class="n">pending</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">t</span><span class="p">:</span>   <span class="c1"># 新到者先入队，再放回当前进程</span>
+            <span class="n">queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pending</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">remain</span><span class="p">[</span><span class="n">name</span><span class="p">]:</span>
+            <span class="n">queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">finish</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span>
+    <span class="k">return</span> <span class="n">finish</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">report</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">finish</span><span class="p">):</span>
+    <span class="n">info</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">PROCS</span><span class="p">}</span>
+    <span class="n">tat_sum</span> <span class="o">=</span> <span class="n">wait_sum</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">finish</span><span class="p">):</span>
+        <span class="n">arrive</span><span class="p">,</span> <span class="n">burst</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="n">tat</span> <span class="o">=</span> <span class="n">finish</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">-</span> <span class="n">arrive</span>             <span class="c1"># 周转时间 = 完成 - 到达</span>
+        <span class="n">wait</span> <span class="o">=</span> <span class="n">tat</span> <span class="o">-</span> <span class="n">burst</span>                      <span class="c1"># 等待时间 = 周转 - 运行</span>
+        <span class="n">tat_sum</span> <span class="o">+=</span> <span class="n">tat</span>
+        <span class="n">wait_sum</span> <span class="o">+=</span> <span class="n">wait</span>
+        <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: 完成</span><span class="si">{</span><span class="n">finish</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="si">:</span><span class="s2">&gt;3</span><span class="si">}</span><span class="s2"> 周转</span><span class="si">{</span><span class="n">tat</span><span class="si">:</span><span class="s2">&gt;3</span><span class="si">}</span><span class="s2"> 等待</span><span class="si">{</span><span class="n">wait</span><span class="si">:</span><span class="s2">&gt;3</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">title</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">rows</span><span class="p">))</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">finish</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  平均周转 </span><span class="si">{</span><span class="n">tat_sum</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">n</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">  平均等待 </span><span class="si">{</span><span class="n">wait_sum</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">n</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">report</span><span class="p">(</span><span class="s2">&quot;FCFS&quot;</span><span class="p">,</span> <span class="n">fcfs</span><span class="p">(</span><span class="n">PROCS</span><span class="p">))</span>
+    <span class="n">report</span><span class="p">(</span><span class="s2">&quot;SJF &quot;</span><span class="p">,</span> <span class="n">sjf</span><span class="p">(</span><span class="n">PROCS</span><span class="p">))</span>
+    <span class="n">report</span><span class="p">(</span><span class="s2">&quot;RR q=2&quot;</span><span class="p">,</span> <span class="n">rr</span><span class="p">(</span><span class="n">PROCS</span><span class="p">))</span>
+</code></pre></div><div class="code-tools"><button onclick="runCode(this,0)" title="在浏览器中运行">&#9654; 运行</button><button onclick="copyCode(this)">&#128203; 复制</button></div></div><div class="run-out"></div>
+
+<p>输出显示同一组进程：SJF 平均等待 4.00 最优，FCFS 4.75，RR 5.00 但 P3 这样的短交互任务响应最快。完整的五算法版本（含优先级与多级反馈队列）见配套代码 <code>code/07-os/scheduler.py</code>。</p>
+<hr />
+<h2 id="4">4. 进程同步与互斥</h2>
+<h3 id="_9">知识要点</h3>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>含义</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>竞争条件</td>
+<td>结果依赖多个执行流的交错顺序</td>
+<td><code>count += 1</code> 不是原子操作</td>
+</tr>
+<tr>
+<td>临界区</td>
+<td>访问共享资源的代码段</td>
+<td>同一时刻至多一个执行流进入</td>
+</tr>
+<tr>
+<td>互斥锁</td>
+<td>提供互斥的最基本原语</td>
+<td><code>acquire</code> / <code>release</code></td>
+</tr>
+<tr>
+<td>信号量</td>
+<td>带计数的同步原语，P（减）/ V（加）</td>
+<td>计数为 0 时 P 操作阻塞</td>
+</tr>
+<tr>
+<td>管程</td>
+<td>把共享数据和操作封装在一起，自动互斥</td>
+<td>条件变量 wait / signal</td>
+</tr>
+</tbody>
+</table>
+<p>临界区解决方案必须满足四条：<strong>互斥</strong>（至多一个进入）、<strong>前进</strong>（无人在临界区时申请者不能被无限拖延）、<strong>有限等待</strong>（不能饿死）、<strong>让权等待</strong>（等不到就让出 CPU，避免忙等——纯软件自旋方案不满足这条）。</p>
+<p>信号量的两种用法：</p>
+<ul>
+<li><strong>互斥</strong>：初值 1，进临界区 P、出临界区 V（就是锁）</li>
+<li><strong>同步/资源计数</strong>：初值 = 资源数量，P 申请一个资源、V 归还一个资源；初值 0 可实现"事件等待"（A 做完 V 一下，B 先 P 等着）</li>
+</ul>
+<h3 id="_10">关键概念精讲</h3>
+<p><strong>为什么 <code>count += 1</code> 会出错</strong>。这一行编译成三条指令：读 count 到寄存器、寄存器加一、写回内存。两个线程同时执行时可能都读到旧值 5，各自加一后都写回 6——丢失一次更新。解决思路只有一个：把"读-改-写"变成不可分割的<strong>原子操作</strong>，要么靠硬件原子指令（<code>test-and-set</code>、<code>compare-and-swap</code>），要么靠锁把整段包起来。</p>
+<p><strong>生产者-消费者</strong>（有界缓冲）是同步问题的原型：缓冲区容量 N，生产者放、消费者取。需要三个信号量：<code>mutex = 1</code> 保护缓冲区本身，<code>empty = N</code> 数空位，<code>full = 0</code> 数产品。生产者 <code>P(empty) → P(mutex) → 放入 → V(mutex) → V(full)</code>；消费者 <code>P(full) → P(mutex) → 取出 → V(mutex) → V(empty)</code>。<strong>顺序不能颠倒</strong>：若先 <code>P(mutex)</code> 再 <code>P(empty)</code>，生产者可能抱着锁等空位，消费者拿不到锁无法腾空位——死锁。</p>
+<p><strong>读者-写者</strong>：允许多个读者同时读，写者必须独占。读者优先方案用 <code>read_count</code> 计数，第一个读者替所有读者锁住写者、最后一个读者放行，代价是写者可能饿死；写者优先与公平方案（按到达顺序）是它的修正。数据库的共享锁/排他锁、Go 的 <code>sync.RWMutex</code> 都是这个模型。</p>
+<p><strong>哲学家就餐</strong>：五人围坐、五只叉子，每人要拿左右两只才能吃。若都先拿左手叉子，可能五人各持一只互等——死锁。可行解法：至多允许 4 人同时伸手（信号量初值 4）；奇数号先拿左、偶数号先拿右（打破对称）；<strong>资源分级</strong>——给叉子编号，永远先拿编号小的（普适的死锁预防手段，见第 5 章）。</p>
+<p><strong>管程</strong>把"数据 + 操作 + 互斥"打包：任一时刻只有一个线程能执行管程内的过程，条件不满足时在<strong>条件变量</strong>上 <code>wait</code>（释放管程并睡眠），别人改变条件后 <code>signal</code> 唤醒。Java 的 <code>synchronized</code> + <code>wait/notify</code>、Python 的 <code>threading.Condition</code> 都是管程思想。比裸信号量安全：互斥是自动的，程序员只操心条件。</p>
+<p>下图展示了生产者与消费者通过三个信号量协作的流程，注意 P 操作的先后次序。</p>
+<div class="mermaid">flowchart LR
+    subgraph 生产者循环
+        A[生产一件产品] --> B["P(empty) 等空位"]
+        B --> C["P(mutex) 进临界区"]
+        C --> D[放入缓冲区]
+        D --> E["V(mutex)"]
+        E --> F["V(full) 产品数+1"]
+        F --> A
+    end
+    subgraph 消费者循环
+        G["P(full) 等产品"] --> H["P(mutex) 进临界区"]
+        H --> I[取出一件产品]
+        I --> J["V(mutex)"]
+        J --> K["V(empty) 空位数+1"]
+        K --> L[消费产品] --> G
+    end
+    F -.唤醒.-> G
+    K -.唤醒.-> B
+</div>
+
+<h3 id="_11">案例代码：竞争条件复现与加锁修复</h3>
+<div class="codewrap"><div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">race_demo</span><span class="p">(</span><span class="n">use_lock</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;两个线程各对共享计数器自增 100000 次。</span>
+<span class="sd">    不加锁时结果通常小于 200000（丢失更新）。&quot;&quot;&quot;</span>
+    <span class="n">counter</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;v&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+    <span class="n">lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="mi">100_000</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">worker</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">use_lock</span><span class="p">:</span>
+                <span class="k">with</span> <span class="n">lock</span><span class="p">:</span>
+                    <span class="n">counter</span><span class="p">[</span><span class="s2">&quot;v&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>        <span class="c1"># 临界区：读-改-写被锁保护</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">v</span> <span class="o">=</span> <span class="n">counter</span><span class="p">[</span><span class="s2">&quot;v&quot;</span><span class="p">]</span>             <span class="c1"># 故意拆开读与写，放大交错窗口</span>
+                <span class="n">counter</span><span class="p">[</span><span class="s2">&quot;v&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="n">ts</span> <span class="o">=</span> <span class="p">[</span><span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">worker</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)]</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">ts</span><span class="p">:</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">ts</span><span class="p">:</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+    <span class="n">tag</span> <span class="o">=</span> <span class="s2">&quot;加锁&quot;</span> <span class="k">if</span> <span class="n">use_lock</span> <span class="k">else</span> <span class="s2">&quot;不加锁&quot;</span>
+    <span class="n">ok</span> <span class="o">=</span> <span class="s2">&quot;正确&quot;</span> <span class="k">if</span> <span class="n">counter</span><span class="p">[</span><span class="s2">&quot;v&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">N</span> <span class="k">else</span> <span class="s2">&quot;丢失更新!&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">: counter = </span><span class="si">{</span><span class="n">counter</span><span class="p">[</span><span class="s1">&#39;v&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">&gt;7</span><span class="si">}</span><span class="s2">（期望 </span><span class="si">{</span><span class="mi">2</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">N</span><span class="si">}</span><span class="s2">）-&gt; </span><span class="si">{</span><span class="n">ok</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">race_demo</span><span class="p">(</span><span class="n">use_lock</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">race_demo</span><span class="p">(</span><span class="n">use_lock</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div><div class="code-tools"><button class="blocked" disabled title="浏览器 Python（Pyodide）不支持多线程，请下载到本地运行">&#9654; 仅本地可运行</button><button onclick="copyCode(this)">&#128203; 复制</button></div></div>
+
+<p>生产者-消费者、读者-写者、哲学家就餐三个经典问题的完整可运行实现见配套代码 <code>code/07-os/sync_demo.py</code>——其中哲学家用"资源分级"保证永不死锁且能自动结束。</p>
+<hr />
+<h2 id="5">5. 死锁</h2>
+<h3 id="_12">知识要点</h3>
+<p>死锁：一组进程互相等待对方持有的资源，谁都无法前进。四个<strong>必要条件</strong>（缺一不可）：</p>
+<table>
+<thead>
+<tr>
+<th>条件</th>
+<th>含义</th>
+<th>破坏它的办法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>互斥</td>
+<td>资源一次只能给一个进程</td>
+<td>资源本性，一般无法破坏</td>
+</tr>
+<tr>
+<td>持有并等待</td>
+<td>拿着已有资源等新资源</td>
+<td>一次性申请全部资源</td>
+</tr>
+<tr>
+<td>不可抢占</td>
+<td>资源不能被强行夺走</td>
+<td>申请失败就释放已持有资源</td>
+</tr>
+<tr>
+<td>循环等待</td>
+<td>存在进程-资源的环形等待链</td>
+<td>资源统一编号，按序申请</td>
+</tr>
+</tbody>
+</table>
+<p>处理策略从严到松：<strong>预防</strong>（破坏必要条件，代价是资源利用率低）→ <strong>避免</strong>（分配前算一算会不会进入不安全状态——银行家算法）→ <strong>检测与恢复</strong>（放任发生，定期检测，杀进程或回滚）→ <strong>鸵鸟策略</strong>（假装不存在，重启解决——大多数通用操作系统的现实选择）。</p>
+<h3 id="_13">关键概念精讲</h3>
+<p><strong>资源分配图</strong>：进程为圆、资源为方，分配边（资源→进程）与请求边（进程→资源）。每类资源只有一个实例时，<strong>有环 ⇔ 死锁</strong>；多实例时有环只是死锁的必要条件，需进一步做可完成性归约（能找到可完成的进程就删掉它的边，最后删不动且还有边残留才是死锁）。</p>
+<p><strong>安全状态与银行家算法</strong>。安全状态：存在一个进程序列，按序让每个进程拿到最大需求、跑完、归还，所有人都能完成。银行家算法在每次资源请求时做"试探分配 + 安全性检查"：</p>
+<ol>
+<li>若 <code>请求 &gt; Need</code>（超过声明上限）→ 拒绝</li>
+<li>若 <code>请求 &gt; Available</code> → 让它等</li>
+<li>试探性分配，跑安全性算法：<code>Work = Available</code>，反复找一个 <code>Need &lt;= Work</code> 的未完成进程，令 <code>Work += 它的 Allocation</code> 并标记完成；若全部能完成则安全、正式分配，否则回滚拒绝</li>
+</ol>
+<p>注意<strong>不安全状态不等于必然死锁</strong>——它只是"存在一种运气不好的执行顺序会死锁"；银行家算法保守地拒绝进入任何不安全状态。它的工程局限：要求进程预先声明最大需求、进程数与资源数固定，所以真实通用系统很少用，但在数据库事务与集群资源配额里思想常在。</p>
+<p><strong>死锁检测与恢复</strong>：对多实例资源跑与安全性算法同构的检测算法，找出无法完成的进程集合。恢复手段：按代价挑受害者杀进程（数据库选回滚代价最小的事务）、资源抢占、回滚到检查点。数据库死锁检测器就是典型实现——MySQL InnoDB 检测到死锁会主动回滚其中一个事务并报错 <code>Deadlock found</code>。</p>
+<p>下图展示了一个最小死锁：P1 持有 R1 等 R2，P2 持有 R2 等 R1，分配边与请求边构成环。</p>
+<div class="mermaid">flowchart LR
+    P1((进程 P1)) -- 请求 --> R2[资源 R2]
+    R2 -- 已分配给 --> P2((进程 P2))
+    P2 -- 请求 --> R1[资源 R1]
+    R1 -- 已分配给 --> P1
+    style P1 stroke-width:2px
+    style P2 stroke-width:2px
+</div>
+
+<h3 id="_14">案例代码：银行家算法安全性检查（精简版）</h3>
+<div class="codewrap"><div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">safety_check</span><span class="p">(</span><span class="n">available</span><span class="p">,</span> <span class="n">alloc</span><span class="p">,</span> <span class="n">need</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;银行家算法安全性检查：返回 (是否安全, 安全序列)。&quot;&quot;&quot;</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">alloc</span><span class="p">)</span>
+    <span class="n">work</span> <span class="o">=</span> <span class="n">available</span><span class="p">[:]</span>
+    <span class="n">finish</span> <span class="o">=</span> <span class="p">[</span><span class="kc">False</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span>
+    <span class="n">seq</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">changed</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">while</span> <span class="n">changed</span><span class="p">:</span>
+        <span class="n">changed</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">finish</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">need</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">work</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">work</span><span class="p">))):</span>
+                <span class="n">work</span> <span class="o">=</span> <span class="p">[</span><span class="n">work</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="n">alloc</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">work</span><span class="p">))]</span>
+                <span class="n">finish</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>                 <span class="c1"># 进程 i 能跑完并归还资源</span>
+                <span class="n">seq</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;P</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">changed</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">finish</span><span class="p">),</span> <span class="n">seq</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1"># 经典例子：3 类资源，5 个进程</span>
+    <span class="n">available</span> <span class="o">=</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+    <span class="n">alloc</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]]</span>
+    <span class="n">max_</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">7</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">9</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">]]</span>
+    <span class="n">need</span> <span class="o">=</span> <span class="p">[[</span><span class="n">max_</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">alloc</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">)]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)]</span>
+
+    <span class="n">safe</span><span class="p">,</span> <span class="n">seq</span> <span class="o">=</span> <span class="n">safety_check</span><span class="p">(</span><span class="n">available</span><span class="p">,</span> <span class="n">alloc</span><span class="p">,</span> <span class="n">need</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;安全&quot;</span> <span class="k">if</span> <span class="n">safe</span> <span class="k">else</span> <span class="s2">&quot;不安全&quot;</span><span class="p">,</span> <span class="s2">&quot;安全序列:&quot;</span><span class="p">,</span> <span class="s2">&quot; -&gt; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">seq</span><span class="p">))</span>
+
+    <span class="c1"># P0 直接拿走 (0,2,0) 后再查：进入不安全状态</span>
+    <span class="n">available2</span> <span class="o">=</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+    <span class="n">alloc2</span> <span class="o">=</span> <span class="p">[</span><span class="n">row</span><span class="p">[:]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">alloc</span><span class="p">]</span>
+    <span class="n">alloc2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">need2</span> <span class="o">=</span> <span class="p">[[</span><span class="n">max_</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">alloc2</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">)]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)]</span>
+    <span class="n">safe2</span><span class="p">,</span> <span class="n">seq2</span> <span class="o">=</span> <span class="n">safety_check</span><span class="p">(</span><span class="n">available2</span><span class="p">,</span> <span class="n">alloc2</span><span class="p">,</span> <span class="n">need2</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;若批准 P0 请求 (0,2,0):&quot;</span><span class="p">,</span> <span class="s2">&quot;安全&quot;</span> <span class="k">if</span> <span class="n">safe2</span> <span class="k">else</span> <span class="s2">&quot;不安全，应拒绝并回滚&quot;</span><span class="p">)</span>
+</code></pre></div><div class="code-tools"><button onclick="runCode(this,0)" title="在浏览器中运行">&#9654; 运行</button><button onclick="copyCode(this)">&#128203; 复制</button></div></div><div class="run-out"></div>
+
+<p>含"请求判定 + 试探分配 + 回滚"完整流程的版本见配套代码 <code>code/07-os/banker.py</code>。</p>
+<hr />
+<h2 id="6">6. 内存管理</h2>
+<h3 id="_15">知识要点</h3>
+<p>内存管理的演进，每一步都在解决前一步的碎片问题：</p>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>思路</th>
+<th>碎片问题</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>单一连续分配</td>
+<td>整块内存给一个程序</td>
+<td>浪费严重，无多道</td>
+</tr>
+<tr>
+<td>固定分区</td>
+<td>预先切成几个分区</td>
+<td>内部碎片（分区装不满）</td>
+</tr>
+<tr>
+<td>动态分区</td>
+<td>按需切分（首次/最佳/最坏适应）</td>
+<td>外部碎片（空闲块零碎不连续）</td>
+</tr>
+<tr>
+<td>分页</td>
+<td>内存切成等大页框，程序切成等大页</td>
+<td>只剩每进程最后一页的少量内部碎片</td>
+</tr>
+<tr>
+<td>分段</td>
+<td>按逻辑单元（代码/数据/栈）分段</td>
+<td>有外部碎片，但便于共享与保护</td>
+</tr>
+<tr>
+<td>段页式</td>
+<td>先分段、段内再分页</td>
+<td>结合两者优点，两次查表</td>
+</tr>
+</tbody>
+</table>
+<p>分页的核心公式（页大小 4KB = 2^12 为例，32 位地址）：</p>
+<ul>
+<li><code>虚拟地址 = 页号(20位) + 页内偏移(12位)</code></li>
+<li><code>页号 = 虚拟地址 / 页大小</code>，<code>偏移 = 虚拟地址 % 页大小</code></li>
+<li><code>物理地址 = 页表[页号].页框号 * 页大小 + 偏移</code></li>
+</ul>
+<h3 id="_16">关键概念精讲</h3>
+<p><strong>为什么分页能消灭外部碎片</strong>。动态分区的痛点是：空闲内存总量够，但被切得零零碎碎、没有一块连续的够大——外部碎片。分页把"连续"这个要求本身取消了：程序的第 0 页和第 1 页可以放在物理内存中任意两个不相邻的页框里，靠页表记住映射。任何一个空闲页框都能用，外部碎片归零；代价是每个进程要维护页表，以及平均每进程半页的内部碎片。</p>
+<p><strong>地址翻译由 MMU 硬件完成</strong>。CPU 每发出一个虚拟地址，MMU 取高位做页号、查页表得页框号、拼上低位偏移得到物理地址——每条访存指令都要经历这个过程，所以必须是硬件速度。页表项（PTE）除页框号外还带标志位：有效位（这页在不在内存）、读/写/执行权限位、脏位（写过没有）、访问位（最近用过没有）——后两位是页面置换算法的原料。</p>
+<p><strong>TLB 是页表的高速缓存</strong>。页表放在内存里，直接查表意味着每次访存变成两次访存（先读 PTE 再读数据）——性能减半。TLB（快表）用几十到几百项的全相联缓存存最近用过的"页号→页框号"映射，命中约 1ns 内完成。<code>有效访问时间 = 命中率 * (TLB时间 + 访存) + 缺失率 * (TLB时间 + 2 * 访存)</code>。程序局部性使 TLB 命中率通常在 99% 以上；大模型推理这类内存密集负载常用 2MB/1GB <strong>大页</strong>减少 TLB 缺失。</p>
+<p><strong>多级页表解决页表太大</strong>。32 位地址、4KB 页，单级页表要 2^20 项 x 4B = 4MB / 进程，且必须连续常驻。二级页表把页号再拆成"页目录号 + 页表号"，未用到的区域整棵子树不分配——稀疏地址空间只花很少内存。x86-64 用四级（48 位虚拟地址：9+9+9+9+12）。代价是一次翻译最多多次访存，全靠 TLB 兜底。</p>
+<p>下图展示了 32 位虚拟地址经页表翻译成物理地址的全过程：高 20 位页号查页表换成页框号，低 12 位偏移原样拼接。</p>
+<p><svg viewBox="0 0 680 300" width="100%" role="img" aria-label="虚拟地址经页表翻译为物理地址">
+  <text x="10" y="20" fill="var(--text)" font-size="14" font-weight="bold">分页地址翻译（4KB 页，32 位地址）</text>
+  <rect x="40" y="40" width="300" height="34" fill="var(--panel)" stroke="var(--text)" stroke-width="1.5"/>
+  <line x1="240" y1="40" x2="240" y2="74" stroke="var(--text)" stroke-width="1.5"/>
+  <text x="140" y="61" fill="var(--text)" font-size="12" text-anchor="middle">页号 VPN = 0x00123（20 位）</text>
+  <text x="290" y="61" fill="var(--text)" font-size="12" text-anchor="middle">偏移 0xABC</text>
+  <text x="40" y="90" fill="var(--muted)" font-size="11">虚拟地址 0x00123ABC</text>
+  <rect x="80" y="120" width="200" height="130" fill="var(--panel)" stroke="var(--text)" stroke-width="1.5" rx="4"/>
+  <text x="180" y="138" fill="var(--muted)" font-size="12" text-anchor="middle">页表（每进程一张）</text>
+  <g font-size="11" fill="var(--text)">
+    <text x="95" y="158">VPN 0x00121 → 帧 0x0A0  有效</text>
+    <text x="95" y="178">VPN 0x00122 → 磁盘上   无效</text>
+    <text x="95" y="218">VPN 0x00124 → 帧 0x1F3  有效</text>
+  </g>
+  <rect x="88" y="186" width="184" height="20" fill="var(--accent)" rx="3"/>
+  <text x="95" y="200" fill="#fff" font-size="11">VPN 0x00123 → 帧 0x2C7  有效</text>
+  <g stroke="var(--text)" stroke-width="1.6" fill="none">
+    <path d="M 140 74 L 140 100 L 80 100 L 80 118" />
+    <path d="M 272 196 L 420 196 L 420 216" />
+    <path d="M 290 74 L 290 100 L 560 100 L 560 216" />
+  </g>
+  <g fill="var(--text)">
+    <polygon points="80,118 76,110 84,110"/>
+    <polygon points="420,216 416,208 424,208"/>
+    <polygon points="560,216 556,208 564,208"/>
+  </g>
+  <text x="300" y="188" fill="var(--accent)" font-size="11">页框号 0x2C7</text>
+  <text x="452" y="110" fill="var(--muted)" font-size="11">偏移直接拼接（不翻译）</text>
+  <rect x="360" y="220" width="240" height="34" fill="var(--panel)" stroke="var(--text)" stroke-width="1.5"/>
+  <line x1="500" y1="220" x2="500" y2="254" stroke="var(--text)" stroke-width="1.5"/>
+  <text x="430" y="241" fill="var(--text)" font-size="12" text-anchor="middle">页框号 0x2C7</text>
+  <text x="550" y="241" fill="var(--text)" font-size="12" text-anchor="middle">偏移 0xABC</text>
+  <text x="360" y="275" fill="var(--muted)" font-size="11">物理地址 0x2C7ABC（TLB 命中时跳过查表，1ns 内完成）</text>
+</svg></p>
+<h3 id="tlb">案例代码：分页地址翻译模拟（含 TLB）</h3>
+<div class="codewrap"><div class="codehilite"><pre><span></span><code><span class="n">PAGE_SIZE</span> <span class="o">=</span> <span class="mi">4096</span>          <span class="c1"># 4KB 页</span>
+<span class="n">TLB_CAP</span> <span class="o">=</span> <span class="mi">4</span>               <span class="c1"># TLB 容量 4 项（真实硬件为几十到几百项）</span>
+
+<span class="n">page_table</span> <span class="o">=</span> <span class="p">{</span><span class="mh">0x00121</span><span class="p">:</span> <span class="mh">0x0A0</span><span class="p">,</span> <span class="mh">0x00123</span><span class="p">:</span> <span class="mh">0x2C7</span><span class="p">,</span> <span class="mh">0x00124</span><span class="p">:</span> <span class="mh">0x1F3</span><span class="p">,</span> <span class="mh">0x00200</span><span class="p">:</span> <span class="mh">0x055</span><span class="p">}</span>
+<span class="n">tlb</span> <span class="o">=</span> <span class="p">{}</span>                  <span class="c1"># 页号 -&gt; 页框号（FIFO 淘汰，简化）</span>
+<span class="n">stats</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;tlb_hit&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;tlb_miss&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">translate</span><span class="p">(</span><span class="n">vaddr</span><span class="p">):</span>
+    <span class="n">vpn</span><span class="p">,</span> <span class="n">offset</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">vaddr</span><span class="p">,</span> <span class="n">PAGE_SIZE</span><span class="p">)</span>      <span class="c1"># 拆成页号 + 页内偏移</span>
+    <span class="k">if</span> <span class="n">vpn</span> <span class="ow">in</span> <span class="n">tlb</span><span class="p">:</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;tlb_hit&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">frame</span><span class="p">,</span> <span class="n">how</span> <span class="o">=</span> <span class="n">tlb</span><span class="p">[</span><span class="n">vpn</span><span class="p">],</span> <span class="s2">&quot;TLB命中&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;tlb_miss&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">vpn</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">page_table</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;0x</span><span class="si">{</span><span class="n">vaddr</span><span class="si">:</span><span class="s2">08X</span><span class="si">}</span><span class="s2">: 页 0x</span><span class="si">{</span><span class="n">vpn</span><span class="si">:</span><span class="s2">05X</span><span class="si">}</span><span class="s2"> 无效 -&gt; 缺页中断/段错误&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">frame</span><span class="p">,</span> <span class="n">how</span> <span class="o">=</span> <span class="n">page_table</span><span class="p">[</span><span class="n">vpn</span><span class="p">],</span> <span class="s2">&quot;TLB缺失,查页表&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tlb</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">TLB_CAP</span><span class="p">:</span>                 <span class="c1"># TLB 满则淘汰最早项</span>
+            <span class="n">tlb</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">tlb</span><span class="p">)))</span>
+        <span class="n">tlb</span><span class="p">[</span><span class="n">vpn</span><span class="p">]</span> <span class="o">=</span> <span class="n">frame</span>
+    <span class="n">paddr</span> <span class="o">=</span> <span class="n">frame</span> <span class="o">*</span> <span class="n">PAGE_SIZE</span> <span class="o">+</span> <span class="n">offset</span>          <span class="c1"># 物理地址 = 页框基址 + 偏移</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;0x</span><span class="si">{</span><span class="n">vaddr</span><span class="si">:</span><span class="s2">08X</span><span class="si">}</span><span class="s2"> -&gt; 0x</span><span class="si">{</span><span class="n">paddr</span><span class="si">:</span><span class="s2">06X</span><span class="si">}</span><span class="s2">  (页 0x</span><span class="si">{</span><span class="n">vpn</span><span class="si">:</span><span class="s2">05X</span><span class="si">}</span><span class="s2"> -&gt; 帧 0x</span><span class="si">{</span><span class="n">frame</span><span class="si">:</span><span class="s2">03X</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">how</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">paddr</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">va</span> <span class="ow">in</span> <span class="p">[</span><span class="mh">0x00123ABC</span><span class="p">,</span> <span class="mh">0x00123FFF</span><span class="p">,</span>        <span class="c1"># 同一页：第二次 TLB 命中</span>
+               <span class="mh">0x00124000</span><span class="p">,</span> <span class="mh">0x00121123</span><span class="p">,</span>
+               <span class="mh">0x00123000</span><span class="p">,</span>                     <span class="c1"># 再访问，仍命中</span>
+               <span class="mh">0x00999000</span><span class="p">]:</span>                    <span class="c1"># 无效页</span>
+        <span class="n">translate</span><span class="p">(</span><span class="n">va</span><span class="p">)</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;tlb_hit&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;tlb_miss&quot;</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;TLB 命中 </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;tlb_hit&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2"> —— 局部性越好命中率越高&quot;</span><span class="p">)</span>
+</code></pre></div><div class="code-tools"><button onclick="runCode(this,0)" title="在浏览器中运行">&#9654; 运行</button><button onclick="copyCode(this)">&#128203; 复制</button></div></div><div class="run-out"></div>
+
+<hr />
+<h2 id="7">7. 虚拟内存与页面置换</h2>
+<h3 id="_17">知识要点</h3>
+<p>虚拟内存 = 分页 + 按需调入 + 页面置换：进程的页不必全部在内存，访问到不在内存的页时触发<strong>缺页中断</strong>，由操作系统把页从磁盘调入；内存满了就按置换算法挑一页换出。支撑它的是<strong>局部性原理</strong>——程序在一段时间内只集中访问一小部分页（工作集）。</p>
+<p>缺页处理流程：MMU 发现 PTE 无效 → 陷入内核 → 检查是合法缺页还是非法访问（段错误）→ 找空闲页框（没有则运行置换算法，被换出页若是脏页先写回磁盘）→ 从磁盘读入所需页 → 更新页表 → 重新执行引发缺页的那条指令。</p>
+<table>
+<thead>
+<tr>
+<th>算法</th>
+<th>淘汰对象</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OPT</td>
+<td>将来最晚被访问的页</td>
+<td>理论最优，不可实现（要预知未来），用作评价基准</td>
+</tr>
+<tr>
+<td>FIFO</td>
+<td>驻留最久的页</td>
+<td>简单；有 Belady 异常（页框增多缺页反而变多）</td>
+</tr>
+<tr>
+<td>LRU</td>
+<td>最近最久未使用的页</td>
+<td>接近 OPT；精确实现代价高（每次访存都要更新）</td>
+</tr>
+<tr>
+<td>Clock</td>
+<td>环形扫描给"二次机会"</td>
+<td>LRU 的低成本近似，真实系统的主流选择</td>
+</tr>
+</tbody>
+</table>
+<p><code>缺页率 = 缺页次数 / 访问次数</code>；<code>有效访问时间 = (1 - p) * 访存时间 + p * 缺页处理时间</code>。访存 100ns、缺页处理 8ms 时，哪怕缺页率只有 0.1%，有效访问时间也会膨胀到 8 微秒——慢 80 倍。虚拟内存的可用性完全押注在极低的缺页率上。</p>
+<h3 id="_18">关键概念精讲</h3>
+<p><strong>LRU 为什么难精确实现</strong>。理想 LRU 要求每次访存都把该页移到"最近"端——硬件不可能为每次访存维护链表。真实系统用 PTE 里的<strong>访问位</strong>近似：Clock 算法把页框排成环，指针扫描，访问位为 1 就清零放过（二次机会），为 0 就淘汰。增强版（NRU）再加脏位，优先淘汰"没访问过且干净"的页，省一次写回。</p>
+<p><strong>Belady 异常</strong>。直觉上页框越多缺页越少，但 FIFO 在访问串 <code>1 2 3 4 1 2 5 1 2 3 4 5</code> 上，3 个页框缺页 9 次、4 个页框反而 10 次。原因是 FIFO 淘汰的"最老页"可能马上又要用。LRU 和 OPT 是<strong>栈式算法</strong>（n 个页框的驻留集恒为 n+1 个页框驻留集的子集），数学上保证无此异常。</p>
+<p><strong>工作集与抖动</strong>。工作集 <code>W(t, Δ)</code>：最近 Δ 次访问中触及的页集合，是进程"此刻真正需要"的内存量。若系统里所有进程的工作集之和超过物理内存，就会<strong>抖动</strong>（thrashing）：每个进程都在互相挤兑页框，CPU 大部分时间在等换页，利用率骤降。对策：按工作集大小控制多道程序度、挂起部分进程。云主机上"内存超卖 + 突发负载 = 集体变慢"就是这个机制。</p>
+<p><strong>写时复制（COW）</strong>是虚拟内存最优雅的应用：<code>fork</code> 子进程时不复制内存，父子共享所有页并标记只读；任一方写入时触发保护异常，内核此刻才复制那一页。<code>fork + exec</code> 启动新程序因此几乎零拷贝。同理还有内存映射文件（<code>mmap</code>）、共享库的代码段共享。</p>
+<p>下图展示了缺页中断的完整处理流程，注意"合法缺页"与"非法访问"的分叉。</p>
+<div class="mermaid">flowchart TD
+    A[CPU 访问虚拟地址] --> B{MMU 查 TLB / 页表<br/>PTE 有效?}
+    B -- 有效 --> C[拼出物理地址, 正常访存]
+    B -- 无效 --> D[缺页中断, 陷入内核]
+    D --> E{地址在进程<br/>合法地址空间内?}
+    E -- 否 --> F[段错误 SIGSEGV, 终止进程]
+    E -- 是 --> G{有空闲页框?}
+    G -- 无 --> H[置换算法选牺牲页]
+    H --> I{牺牲页是脏页?}
+    I -- 是 --> J[先写回磁盘]
+    I -- 否 --> K[直接复用页框]
+    J --> K
+    G -- 有 --> K
+    K --> L[从磁盘调入所需页, 更新页表]
+    L --> M[重新执行引发缺页的指令]
+</div>
+
+<h3 id="fifo-lru-belady">案例代码：FIFO 与 LRU 缺页对比 + Belady 异常复现</h3>
+<div class="codewrap"><div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="n">deque</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">fifo</span><span class="p">(</span><span class="n">pages</span><span class="p">,</span> <span class="n">frames</span><span class="p">):</span>
+    <span class="n">mem</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">faults</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(),</span> <span class="n">deque</span><span class="p">(),</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">pages</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">p</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">mem</span><span class="p">:</span>
+            <span class="n">faults</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mem</span><span class="p">)</span> <span class="o">==</span> <span class="n">frames</span><span class="p">:</span>
+                <span class="n">mem</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">popleft</span><span class="p">())</span>        <span class="c1"># 淘汰驻留最久的页</span>
+            <span class="n">mem</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+            <span class="n">q</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">faults</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">lru</span><span class="p">(</span><span class="n">pages</span><span class="p">,</span> <span class="n">frames</span><span class="p">):</span>
+    <span class="n">mem</span><span class="p">,</span> <span class="n">faults</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">(),</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">pages</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">mem</span><span class="p">:</span>
+            <span class="n">mem</span><span class="o">.</span><span class="n">move_to_end</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>                 <span class="c1"># 命中：挪到&quot;最近&quot;端</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">faults</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mem</span><span class="p">)</span> <span class="o">==</span> <span class="n">frames</span><span class="p">:</span>
+                <span class="n">mem</span><span class="o">.</span><span class="n">popitem</span><span class="p">(</span><span class="n">last</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>        <span class="c1"># 淘汰最久未使用</span>
+            <span class="n">mem</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="n">faults</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">seq</span> <span class="o">=</span> <span class="p">[</span><span class="mi">7</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;常规访问串, 3 页框:  FIFO&quot;</span><span class="p">,</span> <span class="n">fifo</span><span class="p">(</span><span class="n">seq</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="s2">&quot;缺,  LRU&quot;</span><span class="p">,</span> <span class="n">lru</span><span class="p">(</span><span class="n">seq</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="s2">&quot;缺&quot;</span><span class="p">)</span>
+
+    <span class="n">belady</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Belady 串 FIFO: 3 页框&quot;</span><span class="p">,</span> <span class="n">fifo</span><span class="p">(</span><span class="n">belady</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="s2">&quot;缺, 4 页框&quot;</span><span class="p">,</span>
+          <span class="n">fifo</span><span class="p">(</span><span class="n">belady</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="s2">&quot;缺  &lt;- 页框变多缺页反增!&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Belady 串 LRU : 3 页框&quot;</span><span class="p">,</span> <span class="n">lru</span><span class="p">(</span><span class="n">belady</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="s2">&quot;缺, 4 页框&quot;</span><span class="p">,</span>
+          <span class="n">lru</span><span class="p">(</span><span class="n">belady</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="s2">&quot;缺  &lt;- 栈式算法单调改善&quot;</span><span class="p">)</span>
+</code></pre></div><div class="code-tools"><button onclick="runCode(this,0)" title="在浏览器中运行">&#9654; 运行</button><button onclick="copyCode(this)">&#128203; 复制</button></div></div><div class="run-out"></div>
+
+<p>含 OPT 与 Clock、多页框规模对比表的完整版本见配套代码 <code>code/07-os/page_replace.py</code>。</p>
+<hr />
+<h2 id="8">8. 文件系统</h2>
+<h3 id="_19">知识要点</h3>
+<p>文件系统解决三件事：<strong>怎么命名</strong>（目录结构）、<strong>怎么记录一个文件占了哪些块</strong>（分配方式）、<strong>怎么保证掉电不坏</strong>（一致性）。</p>
+<table>
+<thead>
+<tr>
+<th>分配方式</th>
+<th>思路</th>
+<th>优缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>连续分配</td>
+<td>文件占据连续的块</td>
+<td>顺序读快；但难增长、有外部碎片（CD-ROM 用）</td>
+</tr>
+<tr>
+<td>链接分配（FAT）</td>
+<td>每块尾部存下一块指针，FAT 表集中存链</td>
+<td>无外部碎片；随机访问要顺链走，FAT 表可缓存</td>
+</tr>
+<tr>
+<td>索引分配（inode）</td>
+<td>每文件一个索引结点集中存块号</td>
+<td>随机访问快；多级索引支持大文件（UNIX 系主流）</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>目录本质是特殊文件，内容为"文件名 → inode 号"的映射表；树形目录 + 硬链接构成有向无环图</li>
+<li>inode 存元数据（类型、权限、大小、时间戳、块指针），<strong>不存文件名</strong>——文件名在目录里，这就是硬链接（多个名字指向同一 inode）的原理</li>
+<li>经典 UNIX inode：12 个直接指针 + 一级 / 二级 / 三级间接指针。4KB 块、4B 指针时，单文件上限约 <code>12*4KB + 1024*4KB + 1024^2*4KB + 1024^3*4KB ≈ 4TB</code></li>
+<li><strong>日志文件系统</strong>（ext4/NTFS/XFS）：先把修改意图写进日志再改数据，崩溃后重放日志恢复一致性，把 fsck 扫全盘变成秒级恢复</li>
+<li>磁盘调度（机械盘寻道优化）：FCFS、SSTF（最短寻道优先，会饿死边缘请求）、SCAN（电梯：单方向扫到头再折返）、C-SCAN（只单向服务，回程不停，响应更均匀）。SSD 无寻道，此类算法意义消失，优化点转向并行通道与写放大</li>
+</ul>
+<h3 id="_20">关键概念精讲</h3>
+<p><strong>从路径名到数据块</strong>。打开 <code>/home/ana/note.txt</code> 的过程：读根目录 inode（编号固定，如 2）→ 在根目录数据块里找 <code>home</code> 得其 inode 号 → 读 <code>home</code> 的 inode 与数据块找 <code>ana</code> → 再找 <code>note.txt</code> 的 inode 号 → 读它的 inode，块指针在手，才能读数据。一次路径解析要多次磁盘访问，所以内核用 dentry 缓存（目录项缓存）加速——热路径解析全程不碰磁盘。</p>
+<p><strong>FAT vs inode</strong>。FAT（File Allocation Table）把所有链接指针集中放进一张表：<code>FAT[i] = 文件中块 i 的下一块块号</code>，表常驻内存后随机访问只是查内存。它结构简单、兼容性无敌（U 盘、SD 卡至今在用），弱点是元数据能力弱（无权限）、FAT 表本身是单点。inode 方案每文件自带索引，配合多级间接指针既服务小文件（多数文件只用直接指针，一次寻址）又支持超大文件。</p>
+<p><strong>崩溃一致性</strong>。"先写数据还是先写元数据"在掉电时刻会产生不一致（inode 指向没写入的垃圾块，或块已写但 inode 未更新而丢失）。三代方案：fsck 全盘扫描修复（慢）；日志（journaling）——把一组修改先原子地写入日志区再落盘，ext4 默认只给元数据记日志；写时复制（COW）——从不原地改，新数据写新位置、最后原子切换根指针，Btrfs / ZFS / APFS 采用，天然支持快照。</p>
+<p>下图展示了经典 UNIX inode 的指针结构：直接指针一步到数据，间接指针先到"指针块"再到数据，层级越深能表示的文件越大。</p>
+<p><svg viewBox="0 0 680 320" width="100%" role="img" aria-label="inode 多级指针结构">
+  <text x="10" y="20" fill="var(--text)" font-size="14" font-weight="bold">inode 结构：直接指针 + 多级间接指针（4KB 块示例）</text>
+  <rect x="30" y="40" width="170" height="250" fill="var(--panel)" stroke="var(--text)" stroke-width="1.5" rx="6"/>
+  <text x="115" y="60" fill="var(--text)" font-size="12" text-anchor="middle" font-weight="bold">inode #128</text>
+  <g font-size="11" fill="var(--muted)">
+    <text x="45" y="80">类型/权限 rw-r--r--</text>
+    <text x="45" y="96">属主/大小/时间戳</text>
+  </g>
+  <g font-size="11" fill="var(--text)">
+    <text x="45" y="122">直接指针 0 → 块 517</text>
+    <text x="45" y="142">直接指针 1 → 块 902</text>
+    <text x="45" y="162">……共 12 个直接指针</text>
+    <text x="45" y="192">一级间接 → 块 331</text>
+    <text x="45" y="222">二级间接 → 块 415</text>
+    <text x="45" y="252">三级间接 → (未用)</text>
+  </g>
+  <g>
+    <rect x="290" y="100" width="72" height="30" fill="var(--accent)" rx="4"/>
+    <rect x="290" y="140" width="72" height="30" fill="var(--accent)" rx="4"/>
+    <rect x="290" y="180" width="90" height="52" fill="var(--panel)" stroke="var(--text)" stroke-width="1.5" rx="4"/>
+    <rect x="470" y="180" width="72" height="30" fill="var(--accent)" rx="4"/>
+    <rect x="290" y="248" width="90" height="52" fill="var(--panel)" stroke="var(--text)" stroke-width="1.5" rx="4"/>
+    <rect x="440" y="248" width="90" height="40" fill="var(--panel)" stroke="var(--text)" stroke-width="1.5" rx="4"/>
+    <rect x="580" y="253" width="72" height="30" fill="var(--accent)" rx="4"/>
+  </g>
+  <g font-size="11" text-anchor="middle">
+    <text x="326" y="119" fill="#fff">数据块 517</text>
+    <text x="326" y="159" fill="#fff">数据块 902</text>
+    <text x="335" y="200" fill="var(--text)">指针块 331</text>
+    <text x="335" y="216" fill="var(--muted)">1024 个块号</text>
+    <text x="506" y="199" fill="#fff">数据块 ...</text>
+    <text x="335" y="268" fill="var(--text)">指针块 415</text>
+    <text x="335" y="284" fill="var(--muted)">1024 个一级指针</text>
+    <text x="485" y="264" fill="var(--text)">指针块 ...</text>
+    <text x="485" y="280" fill="var(--muted)">再 1024 块号</text>
+    <text x="616" y="272" fill="#fff">数据块 ...</text>
+  </g>
+  <g stroke="var(--text)" stroke-width="1.5" fill="none">
+    <line x1="200" y1="118" x2="288" y2="115"/>
+    <line x1="200" y1="138" x2="288" y2="155"/>
+    <line x1="200" y1="188" x2="288" y2="200"/>
+    <line x1="380" y1="200" x2="468" y2="195"/>
+    <line x1="200" y1="218" x2="288" y2="270"/>
+    <line x1="380" y1="274" x2="438" y2="268"/>
+    <line x1="530" y1="268" x2="578" y2="268"/>
+  </g>
+  <text x="395" y="315" fill="var(--muted)" font-size="11">容量：12x4KB 直接 + 4MB 一级 + 4GB 二级 + 4TB 三级</text>
+</svg></p>
+<h3 id="fcfs-sstf-scan">案例代码：磁盘调度 FCFS / SSTF / SCAN 寻道距离对比</h3>
+<div class="codewrap"><div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fcfs</span><span class="p">(</span><span class="n">reqs</span><span class="p">,</span> <span class="n">head</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;按请求到达顺序服务。返回 (服务顺序, 总寻道距离)。&quot;&quot;&quot;</span>
+    <span class="n">total</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">pos</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="p">[],</span> <span class="n">head</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">reqs</span><span class="p">:</span>
+        <span class="n">total</span> <span class="o">+=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">r</span> <span class="o">-</span> <span class="n">pos</span><span class="p">)</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">r</span>
+        <span class="n">order</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">order</span><span class="p">,</span> <span class="n">total</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">sstf</span><span class="p">(</span><span class="n">reqs</span><span class="p">,</span> <span class="n">head</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;最短寻道时间优先：每次挑离磁头最近的请求。&quot;&quot;&quot;</span>
+    <span class="n">left</span><span class="p">,</span> <span class="n">total</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">pos</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">reqs</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="p">[],</span> <span class="n">head</span>
+    <span class="k">while</span> <span class="n">left</span><span class="p">:</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">abs</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">pos</span><span class="p">))</span>
+        <span class="n">left</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+        <span class="n">total</span> <span class="o">+=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">r</span> <span class="o">-</span> <span class="n">pos</span><span class="p">)</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">r</span>
+        <span class="n">order</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">order</span><span class="p">,</span> <span class="n">total</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">scan</span><span class="p">(</span><span class="n">reqs</span><span class="p">,</span> <span class="n">head</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_cyl</span><span class="o">=</span><span class="mi">199</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;电梯算法：先沿 direction 方向扫到头，再折返服务剩余请求。&quot;&quot;&quot;</span>
+    <span class="n">up</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">reqs</span> <span class="k">if</span> <span class="n">r</span> <span class="o">&gt;=</span> <span class="n">head</span><span class="p">)</span>
+    <span class="n">down</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">((</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">reqs</span> <span class="k">if</span> <span class="n">r</span> <span class="o">&lt;</span> <span class="n">head</span><span class="p">),</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">order</span> <span class="o">=</span> <span class="n">up</span> <span class="o">+</span> <span class="p">([</span><span class="n">max_cyl</span><span class="p">]</span> <span class="k">if</span> <span class="n">down</span> <span class="k">else</span> <span class="p">[])</span> <span class="o">+</span> <span class="n">down</span>   <span class="c1"># 扫到边界再折返</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">order</span> <span class="o">=</span> <span class="n">down</span> <span class="o">+</span> <span class="p">([</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">up</span> <span class="k">else</span> <span class="p">[])</span> <span class="o">+</span> <span class="n">up</span>
+    <span class="n">total</span><span class="p">,</span> <span class="n">pos</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">head</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">order</span><span class="p">:</span>
+        <span class="n">total</span> <span class="o">+=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">r</span> <span class="o">-</span> <span class="n">pos</span><span class="p">)</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">r</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">order</span> <span class="k">if</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">reqs</span><span class="p">],</span> <span class="n">total</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">reqs</span> <span class="o">=</span> <span class="p">[</span><span class="mi">98</span><span class="p">,</span> <span class="mi">183</span><span class="p">,</span> <span class="mi">37</span><span class="p">,</span> <span class="mi">122</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">124</span><span class="p">,</span> <span class="mi">65</span><span class="p">,</span> <span class="mi">67</span><span class="p">]</span>   <span class="c1"># 教科书经典请求串</span>
+    <span class="n">head</span> <span class="o">=</span> <span class="mi">53</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">fn</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">&quot;FCFS&quot;</span><span class="p">,</span> <span class="n">fcfs</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;SSTF&quot;</span><span class="p">,</span> <span class="n">sstf</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;SCAN&quot;</span><span class="p">,</span> <span class="n">scan</span><span class="p">)]:</span>
+        <span class="n">order</span><span class="p">,</span> <span class="n">total</span> <span class="o">=</span> <span class="n">fn</span><span class="p">(</span><span class="n">reqs</span><span class="p">,</span> <span class="n">head</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: 总寻道 </span><span class="si">{</span><span class="n">total</span><span class="si">:</span><span class="s2">&gt;4</span><span class="si">}</span><span class="s2"> 磁道   顺序 </span><span class="si">{</span><span class="n">order</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;结论：SSTF 大幅优于 FCFS 但可能饿死远端请求；SCAN 均衡且总量接近 SSTF。&quot;</span><span class="p">)</span>
+</code></pre></div><div class="code-tools"><button onclick="runCode(this,0)" title="在浏览器中运行">&#9654; 运行</button><button onclick="copyCode(this)">&#128203; 复制</button></div></div><div class="run-out"></div>
+
+<p>一个演示 inode 与数据块分配回收全过程（创建 / 写入 / 触发间接块 / 覆盖写 / 删除）的迷你文件系统见配套代码 <code>code/07-os/filesystem_sim.py</code>。</p>
+<hr />
+<h2 id="9-io">9. I/O 与设备管理</h2>
+<h3 id="_21">知识要点</h3>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>含义</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>轮询</td>
+<td>CPU 循环查询设备状态</td>
+<td>简单但烧 CPU，适合极快设备</td>
+</tr>
+<tr>
+<td>中断</td>
+<td>设备就绪时主动打断 CPU</td>
+<td>每次传输一次中断，适合字符设备</td>
+</tr>
+<tr>
+<td>DMA</td>
+<td>专用控制器直接搬运内存↔设备</td>
+<td>整块传完才中断一次，适合磁盘/网卡</td>
+</tr>
+<tr>
+<td>设备驱动</td>
+<td>内核中操控具体设备的模块</td>
+<td>向上提供统一接口，向下适配硬件</td>
+</tr>
+<tr>
+<td>缓冲</td>
+<td>内存中转区弥合速度差</td>
+<td>单缓冲/双缓冲/循环缓冲/缓冲池</td>
+</tr>
+</tbody>
+</table>
+<p>I/O 软件分层（自上而下）：用户程序 → 设备无关软件（统一命名、缓冲、错误报告）→ 设备驱动 → 中断处理程序 → 硬件。上层不关心"是哪家的网卡"，这就是"一切皆文件"抽象的支撑。</p>
+<h3 id="_22">关键概念精讲</h3>
+<p><strong>从轮询到 DMA 是 CPU 逐步"脱手"的过程</strong>。轮询：CPU 亲自搬每个字节还要空转等待；中断驱动：设备就绪才打断 CPU，但每个字节/字仍要 CPU 搬运，磁盘这种一次几 MB 的传输会把 CPU 打成筛子；DMA：CPU 只下达"把这 64KB 从磁盘读到内存地址 X"的指令，DMA 控制器接管总线自己搬，完成后一次中断收尾。现代高速网卡更进一步（RDMA），数据直达远端内存，两边 CPU 都不参与。</p>
+<p><strong>中断处理为什么分上下半</strong>。中断处理程序运行时通常屏蔽同类中断，必须极快返回。Linux 把工作拆成：上半部（top half）只做紧急事——应答硬件、把数据从设备寄存器抢救到内存、登记待办；下半部（softirq / tasklet / 工作队列）稍后在开中断环境下慢慢处理协议栈解析等重活。这个"快速登记 + 延后处理"的模式在高并发服务设计里被反复借用。</p>
+<p><strong>缓冲的四种形态</strong>。单缓冲：设备写缓冲区、CPU 处理，两者串行部分重叠；双缓冲：一块在填、一块在算，流水起来；循环缓冲：生产者消费者速率抖动更大时用环形队列平滑；缓冲池：全系统共享一池缓冲区按需取用。深度学习数据加载 <code>DataLoader</code> 的 <code>prefetch</code>（GPU 算当前 batch、CPU 预取下一 batch）就是双缓冲；<code>printf</code> 不立刻出现在屏幕上，是因为标准库在用户态做了行缓冲——<code>fflush</code> 就是手动冲刷。</p>
+<p>下图展示了 DMA 一次磁盘读取的完整流程：CPU 只出现在首尾两步。</p>
+<div class="mermaid">flowchart TD
+    A[1. CPU 对 DMA 控制器编程:<br/>源=磁盘, 目的=内存地址X, 长度=64KB] --> B[2. CPU 转去执行其他进程]
+    A --> C[3. DMA 控制器指挥磁盘控制器<br/>把数据逐块搬入内存]
+    C --> D{64KB 全部搬完?}
+    D -- 否 --> C
+    D -- 是 --> E[4. DMA 向 CPU 发一次中断]
+    E --> F[5. 中断处理: 上半部登记完成状态]
+    F --> G[6. 下半部唤醒等待该 I/O 的进程]
+    B -.同一时间段并行.-> C
+</div>
+
+<h3 id="vs">案例代码：用户态缓冲的威力——缓冲写 vs 直通系统调用写</h3>
+<div class="codewrap"><div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+
+<span class="n">N</span><span class="p">,</span> <span class="n">CHUNK</span> <span class="o">=</span> <span class="mi">2000</span><span class="p">,</span> <span class="sa">b</span><span class="s2">&quot;x&quot;</span> <span class="o">*</span> <span class="mi">100</span>          <span class="c1"># 写 2000 次、每次 100 字节</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">unbuffered_write</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;buffering=0：每次 write 都是一次真正的系统调用。&quot;&quot;&quot;</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">,</span> <span class="n">buffering</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">CHUNK</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">buffered_write</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;默认缓冲：小写先攒在用户态缓冲区，攒满才发一次系统调用。&quot;&quot;&quot;</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span>             <span class="c1"># 默认缓冲区通常为几十 KB</span>
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">CHUNK</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">t_raw</span> <span class="o">=</span> <span class="n">unbuffered_write</span><span class="p">(</span><span class="s2">&quot;tmp_raw.bin&quot;</span><span class="p">)</span>
+    <span class="n">t_buf</span> <span class="o">=</span> <span class="n">buffered_write</span><span class="p">(</span><span class="s2">&quot;tmp_buf.bin&quot;</span><span class="p">)</span>
+    <span class="n">same</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getsize</span><span class="p">(</span><span class="s2">&quot;tmp_raw.bin&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getsize</span><span class="p">(</span><span class="s2">&quot;tmp_buf.bin&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;无缓冲(每次都陷入内核): </span><span class="si">{</span><span class="n">t_raw</span><span class="si">:</span><span class="s2">8.2f</span><span class="si">}</span><span class="s2"> ms&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;用户态缓冲(合并系统调用): </span><span class="si">{</span><span class="n">t_buf</span><span class="si">:</span><span class="s2">6.2f</span><span class="si">}</span><span class="s2"> ms   加速约 </span><span class="si">{</span><span class="n">t_raw</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">t_buf</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> 倍&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;两文件大小一致:&quot;</span><span class="p">,</span> <span class="n">same</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;tmp_raw.bin&quot;</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;tmp_buf.bin&quot;</span><span class="p">)</span>
+</code></pre></div><div class="code-tools"><button onclick="runCode(this,1)" title="可运行，但含性能测试或大规模循环，浏览器中较慢">&#9654; 运行 &#9203;</button><button onclick="copyCode(this)">&#128203; 复制</button></div></div><div class="run-out"></div>
+
+<p>同样写 200KB，缓冲版本把约 2000 次系统调用合并成几次，通常快一个数量级——这是第 1 章"系统调用开销"最直接的工程回报。</p>
+<hr />
+<h2 id="_23">扩展知识点</h2>
+<h3 id="cgroups">容器与命名空间、cgroups</h3>
+<p>Docker/K8s 的隔离不是虚拟机，而是 Linux 内核两套机制的组合。<strong>namespace</strong> 负责"看不见"：PID namespace 让容器里的进程以为自己是 1 号进程，mount namespace 给它独立的文件系统视图，network namespace 给它独立的网卡与端口空间，还有 UTS（主机名）、IPC、user 共六大类——同一内核上，每个容器看到一个裁剪过的世界。<strong>cgroups</strong> 负责"用不多"：按控制组限制 CPU 份额、内存上限、块设备带宽，容器内存超限时触发的 OOM killer 正是内核内存管理的机制。理解了这两点就能解释容器的一切特性：启动快（没有 Guest OS，只是普通进程）、密度高（共享内核）、隔离弱于虚拟机（内核漏洞可穿透）。K8s 的 <code>requests/limits</code>、Java 容器内存参数要感知 cgroup 上限等工程问题，根源都在这里。</p>
+<h3 id="gpu">GPU 显存管理与统一内存</h3>
+<p>GPU 显存是大模型时代最贵的"内存"，它的管理完整复刻了本课内存管理的问题谱系。显存分配同样有碎片问题：PyTorch 的 caching allocator 申请显存后不还给驱动，自己维护空闲块池按 size-class 复用——这是用户态的动态分区管理，<code>torch.cuda.empty_cache()</code> 就是手动碎片整理；分配失败报 <code>CUDA out of memory</code> 时，reserved 与 allocated 的差值就是碎片。CUDA <strong>统一内存</strong>（Unified Memory）把 CPU 内存和 GPU 显存映射进同一虚拟地址空间，GPU 访问不在显存的页时触发<strong>GPU 缺页中断</strong>，驱动自动在 PCIe 上迁移页面——就是虚拟内存按需调页的异构版，超额订阅（显存放不下的模型也能跑）靠它实现，代价同样是"缺页风暴导致性能骤降"。训练框架的 ZeRO-Offload / 梯度检查点，本质都是"显存不够，用更慢的层级（内存/NVMe/重算）换容量"——存储层次思想的再现。</p>
+<h3 id="pagedattention-vllm">PagedAttention 与 vLLM 的分页思想</h3>
+<p>LLM 推理时每个请求要维护 KV-cache，长度随生成推进而增长且无法预知上限。朴素做法按最大长度预留连续显存，实测有 60%~80% 的显存被预留但未使用——这正是"连续分配 + 内部碎片"的老问题。vLLM 的 <strong>PagedAttention</strong> 照抄操作系统答案：把 KV-cache 切成固定大小的块（如 16 个 token 一块），逻辑上连续、物理上任意散布，每个请求维护一张"块表"（页表）按需逐块分配；注意力核函数改造成能通过块表间接寻址。效果与分页消灭外部碎片如出一辙：显存浪费降到 4% 以下，吞吐提升数倍。连高级玩法都同源：多个请求共享相同前缀（system prompt）的 KV 块 = 共享内存页；beam search 分叉时块的复制 = 写时复制（COW）。这是"把操作系统课学明白直接产生顶会论文"的当代实例。</p>
+<p>其余值得关注的方向（自行检索）：</p>
+<ul>
+<li><strong>微内核复兴与形式化验证</strong>：seL4 用数学证明内核无 bug，车规与航天场景刚需</li>
+<li><strong>eBPF</strong>：不改内核、不加模块，把沙箱程序注入内核观测点，可观测性与网络加速的新基建</li>
+<li><strong>io_uring</strong>：Linux 新一代异步 I/O 接口，用户态与内核共享环形队列，系统调用次数趋近于零</li>
+<li><strong>NUMA 架构</strong>：多路服务器上"访问本地内存快、跨节点慢"，数据库与推理服务要做 NUMA 亲和</li>
+<li><strong>实时操作系统（RTOS）</strong>：FreeRTOS / Zephyr，可预测性优先于吞吐，自动驾驶与机器人底层</li>
+<li><strong>崩溃一致性研究</strong>：日志、COW、软更新之外，持久内存（PMEM）带来的新编程模型</li>
+<li><strong>单内核（unikernel）与库操作系统</strong>：应用与内核链接成单一镜像，冷启动毫秒级，serverless 底座候选</li>
+</ul>
+<hr />
+<h2 id="_24">练习与思考题</h2>
+<p><strong>1. 内核态与用户态</strong>
+下列操作哪些必须陷入内核态完成？说明理由：（a）两个局部变量相加；（b）读取磁盘文件的一个块；（c）修改页表基址寄存器；（d）<code>malloc</code> 从已有堆空闲块中切一块返回；（e）向屏幕输出字符串；（f）关闭中断。</p>
+<details>
+<summary>参考答案</summary>
+<p>必须内核态：<strong>(b)(c)(e)(f)</strong>。
+（a）纯寄存器/内存运算，用户态完成。（b）访问磁盘设备必须经系统调用 <code>read</code> 进内核，由驱动操作硬件。（c）页表基址寄存器（x86 的 CR3）是特权寄存器，用户态改它就能访问任意物理内存，必须特权指令。（d）<code>malloc</code> 在用户态管理堆空闲链表，多数调用不进内核；只有空闲块不够、需要 <code>brk</code>/<code>mmap</code> 扩堆时才陷入内核——所以说"malloc 不一定是系统调用"。（e）最终要 <code>write</code> 到终端设备。（f）开关中断是特权指令，用户程序若能关中断即可独占 CPU，破坏调度。</p>
+</details>
+<p><strong>2. 进程、线程与状态转换</strong>
+（a）判断下列状态转换哪些不可能发生，并说明原因：阻塞→运行；就绪→阻塞；阻塞→就绪；运行→就绪。
+（b）浏览器为什么用"每个标签页一个进程"而不是"每个标签页一个线程"？Web 服务器为什么常用线程（或协程）而不是进程处理每个连接？</p>
+<details>
+<summary>参考答案</summary>
+<p>（a）<strong>阻塞→运行不可能</strong>：事件完成后必须先回就绪队列，由调度器统一挑选，否则绕过了调度策略。<strong>就绪→阻塞不可能</strong>：阻塞是"运行中主动等待事件"的结果，就绪进程没在执行任何代码，无从发起等待。阻塞→就绪（事件完成）与运行→就绪（时间片到/被抢占）都是正常转换。
+（b）标签页用进程图的是<strong>隔离</strong>：一个页面崩溃或被攻破，独立地址空间保证不殃及其他页面（Chrome 站点隔离还防 Spectre 类攻击），代价是内存占用高。服务器连接数以万计，图的是<strong>开销</strong>：线程共享地址空间，创建与切换便宜，连接间本就要共享缓存与连接池；协程更进一步，把切换降到用户态函数跳转级别，单机十万并发连接可行。隔离需求低、数量巨大 → 选轻量执行流。</p>
+</details>
+<p><strong>3. 调度算法计算</strong>
+进程 P1(到达 0，运行 8)、P2(1, 4)、P3(2, 9)、P4(3, 5)。分别计算 FCFS、非抢占 SJF、RR（时间片 q=2）下每个进程的周转时间与等待时间，以及平均值。给出各算法的执行顺序（甘特图文字版）。</p>
+<details>
+<summary>参考答案</summary>
+<p><strong>FCFS</strong>：甘特图 <code>| P1:0-8 | P2:8-12 | P3:12-21 | P4:21-26 |</code>
+周转 = 完成 - 到达：P1 = 8-0 = 8，P2 = 12-1 = 11，P3 = 21-2 = 19，P4 = 26-3 = 23；平均周转 = (8+11+19+23)/4 = <strong>15.25</strong>
+等待 = 周转 - 运行：P1 = 0，P2 = 7，P3 = 10，P4 = 18；平均等待 = (0+7+10+18)/4 = <strong>8.75</strong></p>
+<p><strong>SJF（非抢占）</strong>：0 时刻只有 P1，先跑完；8 时刻就绪队列 {P2:4, P3:9, P4:5}，按短到长：
+甘特图 <code>| P1:0-8 | P2:8-12 | P4:12-17 | P3:17-26 |</code>
+周转：P1 = 8，P2 = 11，P4 = 17-3 = 14，P3 = 26-2 = 24；平均周转 = (8+11+14+24)/4 = <strong>14.25</strong>
+等待：P1 = 0，P2 = 7，P4 = 9，P3 = 15；平均等待 = (0+7+9+15)/4 = <strong>7.75</strong></p>
+<p><strong>RR（q=2）</strong>：甘特图 <code>| P1:0-2 | P2:2-4 | P3:4-6 | P1:6-8 | P4:8-10 | P2:10-12 | P3:12-14 | P1:14-16 | P4:16-18 | P3:18-20 | P1:20-22 | P4:22-23 | P3:23-26 |</code>
+完成时间：P1 = 22，P2 = 12，P3 = 26，P4 = 23
+周转：P1 = 22，P2 = 11，P3 = 24，P4 = 20；平均周转 = (22+11+24+20)/4 = <strong>19.25</strong>
+等待：P1 = 22-8 = 14，P2 = 7，P3 = 15，P4 = 15；平均等待 = (14+7+15+15)/4 = <strong>12.75</strong></p>
+<p>结论与理论一致：SJF 平均值最优，RR 平均周转最差但每个进程都能很快首次上 CPU（响应好）。</p>
+</details>
+<p><strong>4. 信号量应用</strong>
+（a）三个进程 A、B、C 必须严格按 A → B → C 的顺序执行各自的关键步骤，用信号量写出同步方案（给出信号量初值与每个进程的 P/V 操作）。
+（b）生产者-消费者问题中，若把生产者的 <code>P(empty); P(mutex)</code> 写反成 <code>P(mutex); P(empty)</code>，会发生什么？给出一个具体的死锁场景推演。</p>
+<details>
+<summary>参考答案</summary>
+<p>（a）设信号量 <code>Sb = 0</code>、<code>Sc = 0</code>：</p>
+<div class="codewrap"><div class="codehilite"><pre><span></span><code>A: 执行A的步骤; V(Sb)
+B: P(Sb); 执行B的步骤; V(Sc)
+C: P(Sc); 执行C的步骤
+</code></pre></div><div class="code-tools"><button onclick="copyCode(this)">&#128203; 复制</button></div></div>
+
+<p>B 在 A 完成前被 <code>P(Sb)</code> 挡住，C 同理被 <code>P(Sc)</code> 挡住，且信号量初值 0 保证"先 V 后 P 也不丢事件"。</p>
+<p>（b）死锁推演：设缓冲区已满（<code>empty = 0</code>）。生产者执行 <code>P(mutex)</code> 成功拿到锁，接着 <code>P(empty)</code> 因无空位而<strong>抱着锁阻塞</strong>；消费者想取产品，先要 <code>P(mutex)</code>，但锁在生产者手里，消费者也阻塞——没有人能消费出空位，生产者永远等不到 <code>empty</code>。两个进程互相等待对方持有的资源（锁 与 空位），构成死锁。教训：<strong>永远先申请可能长时间等待的资源信号量，最后才拿互斥锁</strong>，并尽快释放。</p>
+</details>
+<p><strong>5. 银行家算法</strong>
+系统有 A、B、C 三类资源，当前 <code>Available = (1, 1, 2)</code>。四个进程的 Max 与 Allocation 如下：</p>
+<table>
+<thead>
+<tr>
+<th>进程</th>
+<th>Max</th>
+<th>Allocation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P0</td>
+<td>(3,2,2)</td>
+<td>(1,0,0)</td>
+</tr>
+<tr>
+<td>P1</td>
+<td>(6,1,3)</td>
+<td>(5,1,1)</td>
+</tr>
+<tr>
+<td>P2</td>
+<td>(3,1,4)</td>
+<td>(2,1,1)</td>
+</tr>
+<tr>
+<td>P3</td>
+<td>(4,2,2)</td>
+<td>(0,0,2)</td>
+</tr>
+</tbody>
+</table>
+<p>（a）求 Need 矩阵；（b）判断当前状态是否安全，若安全给出安全序列（写出 Work 向量的演变过程）；（c）此时 P2 请求 (1,0,1)，能否批准？</p>
+<details>
+<summary>参考答案</summary>
+<p>（a）<code>Need = Max - Allocation</code>：P0 = (2,2,2)，P1 = (1,0,2)，P2 = (1,0,3)，P3 = (4,2,0)。</p>
+<p>（b）安全。<code>Work = (1,1,2)</code> 起步：
+- P1 的 Need (1,0,2) &lt;= (1,1,2)，P1 完成归还 (5,1,1)，<code>Work = (6,2,3)</code>
+- P0 的 Need (2,2,2) &lt;= (6,2,3)，P0 完成归还 (1,0,0)，<code>Work = (7,2,3)</code>
+- P2 的 Need (1,0,3) &lt;= (7,2,3)，P2 完成归还 (2,1,1)，<code>Work = (9,3,4)</code>
+- P3 的 Need (4,2,0) &lt;= (9,3,4)，P3 完成归还 (0,0,2)，<code>Work = (9,3,6)</code></p>
+<p>安全序列：<strong>P1 → P0 → P2 → P3</strong>（不唯一）。</p>
+<p>（c）<strong>不能批准</strong>。请求 (1,0,1) 既不超 Need(P2) = (1,0,3) 也不超 Available = (1,1,2)，于是试探分配：<code>Available = (0,1,1)</code>，P2 的 Allocation 变 (3,1,2)、Need 变 (0,0,2)。做安全性检查：<code>Work = (0,1,1)</code>，逐一检查——P0 需 (2,2,2) 不满足、P1 需 (1,0,2) 不满足（A 类 1 &gt; 0）、P2 需 (0,0,2) 不满足（C 类 2 &gt; 1）、P3 需 (4,2,0) 不满足。无任何进程能完成，系统进入不安全状态，<strong>回滚试探分配，拒绝（推迟）该请求</strong>。</p>
+</details>
+<p><strong>6. 地址翻译与页表</strong>
+32 位系统，页大小 4KB。（a）虚拟地址 <code>0x12345678</code> 的页号和页内偏移各是多少？若页表给出该页映射到页框 <code>0x00ABC</code>，物理地址是多少？（b）访问内存 100ns、访问 TLB 20ns、TLB 命中率 98%，缺失时需额外访问一次内存中的页表，求有效访问时间。（c）某进程只使用两段地址空间共 12MB。单级页表和二级页表（10+10+12 位划分）各需要多少页表内存？</p>
+<details>
+<summary>参考答案</summary>
+<p>（a）页大小 4KB = 2^12，低 12 位是偏移：<code>页号 = 0x12345678 &gt;&gt; 12 = 0x12345</code>，<code>偏移 = 0x678</code>。物理地址 = <code>页框号 &lt;&lt; 12 | 偏移</code> = <code>0x00ABC &lt;&lt; 12 | 0x678</code> = <strong>0x00ABC678</strong>。</p>
+<p>（b）<code>有效访问时间 = 命中率 * (TLB + 访存) + 缺失率 * (TLB + 页表访存 + 数据访存)</code>
+= <code>0.98 * (20 + 100) + 0.02 * (20 + 100 + 100)</code> = <code>0.98 * 120 + 0.02 * 220</code> = <code>117.6 + 4.4</code> = <strong>122ns</strong>。仅比理想的 120ns 慢 2ns——这就是 98% 命中率的价值。</p>
+<p>（c）单级页表：不管进程用多少内存，2^20 项 x 4B = <strong>4MB</strong>，且必须连续。二级页表：12MB / 4KB = 3072 个页 → 3072 个 PTE，每张二级页表 1024 项，需 <code>ceil(3072/1024) = 3</code> 张二级页表（假设两段地址各自对齐落在最少的目录项内，最坏 4 张），加 1 张页目录：<code>(1 + 3) x 4KB = 16KB</code>。<strong>16KB vs 4MB，二级页表按需分配的优势一目了然</strong>。</p>
+</details>
+<p><strong>7. 编程题：实现 LFU 页面置换</strong>
+先手算：访问串 <code>1 2 3 4 1 2 5 1 2 3 4 5</code>、3 个页框，分别求 FIFO 与 LRU 的缺页次数。再编程实现 <strong>LFU</strong>（最不经常使用：淘汰访问次数最少的页，次数相同淘汰更早进入的）并与 FIFO、LRU 在同一访问串上对比。</p>
+<details>
+<summary>参考答案</summary>
+<p>手算：FIFO = <strong>9 次</strong>（1,2,3 各缺；4 换 1；1 换 2；2 换 3；5 换 4；3 换 5 前 1、2 命中……逐步模拟可得 9），LRU = <strong>10 次</strong>（该串对 LRU 恰好不友好，验证"LRU 不总是赢"）。</p>
+<p>LFU 实现与对比（可直接运行）：</p>
+<div class="codewrap"><div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="n">deque</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">fifo</span><span class="p">(</span><span class="n">pages</span><span class="p">,</span> <span class="n">frames</span><span class="p">):</span>
+    <span class="n">mem</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">faults</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(),</span> <span class="n">deque</span><span class="p">(),</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">pages</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">p</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">mem</span><span class="p">:</span>
+            <span class="n">faults</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mem</span><span class="p">)</span> <span class="o">==</span> <span class="n">frames</span><span class="p">:</span>
+                <span class="n">mem</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">popleft</span><span class="p">())</span>
+            <span class="n">mem</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+            <span class="n">q</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">faults</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">lru</span><span class="p">(</span><span class="n">pages</span><span class="p">,</span> <span class="n">frames</span><span class="p">):</span>
+    <span class="n">mem</span><span class="p">,</span> <span class="n">faults</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">(),</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">pages</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">mem</span><span class="p">:</span>
+            <span class="n">mem</span><span class="o">.</span><span class="n">move_to_end</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">faults</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mem</span><span class="p">)</span> <span class="o">==</span> <span class="n">frames</span><span class="p">:</span>
+                <span class="n">mem</span><span class="o">.</span><span class="n">popitem</span><span class="p">(</span><span class="n">last</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">mem</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="n">faults</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">lfu</span><span class="p">(</span><span class="n">pages</span><span class="p">,</span> <span class="n">frames</span><span class="p">):</span>
+    <span class="n">mem</span> <span class="o">=</span> <span class="p">{}</span>            <span class="c1"># 页 -&gt; [访问次数, 进入序号]</span>
+    <span class="n">faults</span><span class="p">,</span> <span class="n">tick</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">pages</span><span class="p">:</span>
+        <span class="n">tick</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">mem</span><span class="p">:</span>
+            <span class="n">mem</span><span class="p">[</span><span class="n">p</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>                      <span class="c1"># 命中：次数 +1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">faults</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mem</span><span class="p">)</span> <span class="o">==</span> <span class="n">frames</span><span class="p">:</span>
+                <span class="c1"># 淘汰次数最少者，并列时淘汰进入更早的</span>
+                <span class="n">victim</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">mem</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="p">(</span><span class="n">mem</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">mem</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="mi">1</span><span class="p">]))</span>
+                <span class="k">del</span> <span class="n">mem</span><span class="p">[</span><span class="n">victim</span><span class="p">]</span>
+            <span class="n">mem</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">tick</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">faults</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">seq</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">fn</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">&quot;FIFO&quot;</span><span class="p">,</span> <span class="n">fifo</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;LRU&quot;</span><span class="p">,</span> <span class="n">lru</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;LFU&quot;</span><span class="p">,</span> <span class="n">lfu</span><span class="p">)]:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">fn</span><span class="p">(</span><span class="n">seq</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s2"> 次缺页&quot;</span><span class="p">)</span>
+</code></pre></div><div class="code-tools"><button onclick="runCode(this,0)" title="在浏览器中运行">&#9654; 运行</button><button onclick="copyCode(this)">&#128203; 复制</button></div></div><div class="run-out"></div>
+
+<p>输出：FIFO 9 次、LRU 10 次、LFU 10 次——这个访问串对 LRU 和 LFU 都不友好，再次说明"没有对所有访问模式都最优的在线置换算法"。LFU 还有"历史包袱"缺陷：早期被频繁访问、之后再也不用的页会赖着不走，所以实际系统更常用带衰减的近似（如老化计数）。</p>
+</details>
+<p><strong>8. 编程题：抢占式最短剩余时间优先（SRTF）</strong>
+实现 SRTF 调度：每当有新进程到达或当前进程结束时重新决策，总是运行剩余时间最短的进程。用第 3 题的进程集 P1(0,8)、P2(1,4)、P3(2,9)、P4(3,5) 测试，输出甘特图（文字版）、每个进程的周转/等待时间与平均值，并与你在第 3 题算出的非抢占 SJF 结果对比，解释差异来源。</p>
+<details>
+<summary>参考答案</summary>
+<p>完整实现（逐个时间单位模拟，可直接运行）：</p>
+<div class="codewrap"><div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">srtf</span><span class="p">(</span><span class="n">procs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;procs: [(名字, 到达, 运行)]。逐时间单位模拟抢占式最短剩余时间优先。&quot;&quot;&quot;</span>
+    <span class="n">remain</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">burst</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">burst</span> <span class="ow">in</span> <span class="n">procs</span><span class="p">}</span>
+    <span class="n">arrive</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">a</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">procs</span><span class="p">}</span>
+    <span class="n">finish</span><span class="p">,</span> <span class="n">gantt</span> <span class="o">=</span> <span class="p">{},</span> <span class="p">[]</span>
+    <span class="n">t</span><span class="p">,</span> <span class="n">done</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="n">done</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">procs</span><span class="p">):</span>
+        <span class="n">ready</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">remain</span> <span class="k">if</span> <span class="n">arrive</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">t</span> <span class="ow">and</span> <span class="n">remain</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ready</span><span class="p">:</span>                            <span class="c1"># CPU 空闲，快进</span>
+            <span class="n">t</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">continue</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">ready</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="p">(</span><span class="n">remain</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="n">arrive</span><span class="p">[</span><span class="n">n</span><span class="p">]))</span>
+        <span class="k">if</span> <span class="n">gantt</span> <span class="ow">and</span> <span class="n">gantt</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">cur</span> <span class="ow">and</span> <span class="n">gantt</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="n">t</span><span class="p">:</span>
+            <span class="n">gantt</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">cur</span><span class="p">,</span> <span class="n">gantt</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">t</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>   <span class="c1"># 延长当前段</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">gantt</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">cur</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">t</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">remain</span><span class="p">[</span><span class="n">cur</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span>
+        <span class="n">t</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">remain</span><span class="p">[</span><span class="n">cur</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">finish</span><span class="p">[</span><span class="n">cur</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span>
+            <span class="n">done</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">gantt</span><span class="p">,</span> <span class="n">finish</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">procs</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">&quot;P1&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;P2&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;P3&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">9</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;P4&quot;</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">)]</span>
+    <span class="n">gantt</span><span class="p">,</span> <span class="n">fin</span> <span class="o">=</span> <span class="n">srtf</span><span class="p">(</span><span class="n">procs</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;甘特图: |&quot;</span><span class="p">,</span> <span class="s2">&quot; | &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">gantt</span><span class="p">),</span> <span class="s2">&quot;|&quot;</span><span class="p">)</span>
+    <span class="n">tot_t</span> <span class="o">=</span> <span class="n">tot_w</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">procs</span><span class="p">:</span>
+        <span class="n">tat</span> <span class="o">=</span> <span class="n">fin</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">-</span> <span class="n">a</span>
+        <span class="n">wait</span> <span class="o">=</span> <span class="n">tat</span> <span class="o">-</span> <span class="n">b</span>
+        <span class="n">tot_t</span> <span class="o">+=</span> <span class="n">tat</span>
+        <span class="n">tot_w</span> <span class="o">+=</span> <span class="n">wait</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: 完成 </span><span class="si">{</span><span class="n">fin</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="si">:</span><span class="s2">&gt;2</span><span class="si">}</span><span class="s2">  周转 </span><span class="si">{</span><span class="n">tat</span><span class="si">:</span><span class="s2">&gt;2</span><span class="si">}</span><span class="s2">  等待 </span><span class="si">{</span><span class="n">wait</span><span class="si">:</span><span class="s2">&gt;2</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;平均周转 </span><span class="si">{</span><span class="n">tot_t</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">4</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">  平均等待 </span><span class="si">{</span><span class="n">tot_w</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">4</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div><div class="code-tools"><button onclick="runCode(this,0)" title="在浏览器中运行">&#9654; 运行</button><button onclick="copyCode(this)">&#128203; 复制</button></div></div><div class="run-out"></div>
+
+<p>运行结果：甘特图 <code>| P1:0-1 | P2:1-5 | P4:5-10 | P1:10-17 | P3:17-26 |</code>——P2 在 1 时刻到达时剩余 4 &lt; P1 剩余 7，立即抢占。
+周转：P1 = 17，P2 = 4，P3 = 24，P4 = 7；平均周转 = 52/4 = <strong>13.00</strong>
+等待：P1 = 9，P2 = 0，P3 = 15，P4 = 2；平均等待 = 26/4 = <strong>6.50</strong></p>
+<p>对比非抢占 SJF（平均周转 14.25、平均等待 7.75）：SRTF 的抢占让短进程 P2、P4 到达后不必等长进程跑完，平均指标进一步改善——代价是 P1 被打断产生额外上下文切换，且若短任务源源不断，长任务 P3 类会长期饥饿。</p>
+</details>
+<hr />
+<h2 id="_25">参考资料</h2>
+<p><strong>教材</strong>：Silberschatz 等《操作系统概念》（第 10 版，"恐龙书"，本讲义章节体系的母本）；Remzi 夫妇《Operating Systems: Three Easy Pieces》（OSTEP，免费开放 ostep.org，虚拟化/并发/持久化三条主线极其清晰，强烈推荐）；Tanenbaum《现代操作系统》（第 4 版，MINIX 作者，微内核视角）；《操作系统真象还原》（中文，从 0 写 boot 到内核，动手派）。</p>
+<p><strong>在线课程</strong>：MIT 6.S081（配 xv6 教学内核，用 RISC-V，实验质量顶级）、UC Berkeley CS162、清华 rCore 教程（用 Rust 从零写操作系统，中文文档完善）、南京大学蒋炎岩操作系统课（B 站公开，状态机视角别开生面）。</p>
+<p><strong>动手实验</strong>：xv6-riscv（MIT 教学内核，六千行代码读得完）；rCore / uCore（清华教学内核）；自己写一个：《30 天自制操作系统》。<strong>工具</strong>：Linux 下 <code>strace</code>（跟踪系统调用）、<code>top</code> / <code>htop</code> / <code>vmstat</code>（观察调度与内存）、<code>perf</code>（上下文切换与缺页计数）、<code>lsof</code>（打开文件表）——把课本概念在真机上看见。</p>
+<p><strong>本章配套代码</strong>（均只依赖标准库，可直接 <code>python 文件名.py</code> 运行）</p>
+<ul>
+<li><code>code/07-os/scheduler.py</code>：FCFS / SJF / RR / 优先级 / 多级反馈队列五种调度模拟，输出甘特图与周转/等待对比表</li>
+<li><code>code/07-os/page_replace.py</code>：FIFO / LRU / OPT / Clock 页面置换对比，含 Belady 异常复现</li>
+<li><code>code/07-os/sync_demo.py</code>：生产者-消费者、读者-写者、哲学家就餐三大同步问题（保证无死锁自动结束）</li>
+<li><code>code/07-os/banker.py</code>：银行家算法安全性检查与资源请求判定（含试探分配与回滚）</li>
+<li><code>code/07-os/filesystem_sim.py</code>：迷你 inode 文件系统，演示创建/写入/间接块/覆盖写/删除全过程</li>
+</ul>
+    <div class="footer">AI 时代计算机基础讲义 · 源文件 docs/md/07-os.md · 修改后运行 build.py 重新生成</div>
+  </main>
+</div>
+<script>
+// ===== 主题切换 =====
+(function () {
+  var saved = localStorage.getItem('lec-theme');
+  var sysDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  document.documentElement.setAttribute('data-theme', saved || (sysDark ? 'dark' : 'light'));
+})();
+function toggleTheme() {
+  var cur = document.documentElement.getAttribute('data-theme');
+  var next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('lec-theme', next);
+  var b = document.getElementById('themeBtn');
+  if (b) b.textContent = next === 'dark' ? '\u2600 亮色' : '\u263D 暗色';
+  if (window.mermaid && document.querySelector('.mermaid')) location.reload();
+}
+document.addEventListener('DOMContentLoaded', function () {
+  var b = document.getElementById('themeBtn');
+  if (b) b.textContent = document.documentElement.getAttribute('data-theme') === 'dark'
+    ? '\u2600 亮色' : '\u263D 暗色';
+});
+
+// ===== 全站搜索 =====
+var SEARCH_IDX = [{"t": "0. AI 时代为什么还要学数电", "c": "数字电子技术", "u": "01-digital.html#0-ai"}, {"t": "1. 数制与编码", "c": "数字电子技术", "u": "01-digital.html#1"}, {"t": "知识要点", "c": "数字电子技术", "u": "01-digital.html#_2"}, {"t": "关键概念精讲", "c": "数字电子技术", "u": "01-digital.html#_3"}, {"t": "案例代码：进制转换与补码、格雷码工具", "c": "数字电子技术", "u": "01-digital.html#_4"}, {"t": "2. 逻辑代数与化简", "c": "数字电子技术", "u": "01-digital.html#2"}, {"t": "知识要点", "c": "数字电子技术", "u": "01-digital.html#_5"}, {"t": "关键概念精讲", "c": "数字电子技术", "u": "01-digital.html#_6"}, {"t": "案例代码：真值表生成器 + Quine-McCluskey 简版", "c": "数字电子技术", "u": "01-digital.html#quine-mccluskey"}, {"t": "3. 逻辑门电路", "c": "数字电子技术", "u": "01-digital.html#3"}, {"t": "知识要点", "c": "数字电子技术", "u": "01-digital.html#_7"}, {"t": "关键概念精讲", "c": "数字电子技术", "u": "01-digital.html#_8"}, {"t": "案例代码：带传输延迟的门级仿真", "c": "数字电子技术", "u": "01-digital.html#_9"}, {"t": "4. 组合逻辑电路", "c": "数字电子技术", "u": "01-digital.html#4"}, {"t": "知识要点", "c": "数字电子技术", "u": "01-digital.html#_10"}, {"t": "关键概念精讲", "c": "数字电子技术", "u": "01-digital.html#_11"}, {"t": "案例代码：4 位加法器（Verilog，可综合 + testbench）", "c": "数字电子技术", "u": "01-digital.html#4-verilog-testbench"}, {"t": "5. 锁存器与触发器", "c": "数字电子技术", "u": "01-digital.html#5"}, {"t": "知识要点", "c": "数字电子技术", "u": "01-digital.html#_12"}, {"t": "关键概念精讲", "c": "数字电子技术", "u": "01-digital.html#_13"}, {"t": "案例代码：用类模拟 D 触发器", "c": "数字电子技术", "u": "01-digital.html#d"}, {"t": "6. 时序逻辑分析与设计", "c": "数字电子技术", "u": "01-digital.html#6"}, {"t": "知识要点", "c": "数字电子技术", "u": "01-digital.html#_14"}, {"t": "关键概念精讲", "c": "数字电子技术", "u": "01-digital.html#_15"}, {"t": "案例代码 1：4 位同步计数器模拟（Python）", "c": "数字电子技术", "u": "01-digital.html#14-python"}, {"t": "案例代码 2：模 10 计数器（Verilog，可综合 + testbench）", "c": "数字电子技术", "u": "01-digital.html#2-10-verilog-testbench"}, {"t": "7. 有限状态机", "c": "数字电子技术", "u": "01-digital.html#7"}, {"t": "知识要点", "c": "数字电子技术", "u": "01-digital.html#_16"}, {"t": "关键概念精讲", "c": "数字电子技术", "u": "01-digital.html#_17"}, {"t": "案例代码：自动售货机 FSM（Python）", "c": "数字电子技术", "u": "01-digital.html#fsmpython"}, {"t": "8. 存储器与可编程逻辑", "c": "数字电子技术", "u": "01-digital.html#8"}, {"t": "知识要点", "c": "数字电子技术", "u": "01-digital.html#_18"}, {"t": "关键概念精讲", "c": "数字电子技术", "u": "01-digital.html#_19"}, {"t": "案例代码：用 ROM 查表实现 7 段数码管译码器", "c": "数字电子技术", "u": "01-digital.html#rom-7"}, {"t": "9. 脉冲波形的产生与整形", "c": "数字电子技术", "u": "01-digital.html#9"}, {"t": "知识要点", "c": "数字电子技术", "u": "01-digital.html#_20"}, {"t": "关键概念精讲", "c": "数字电子技术", "u": "01-digital.html#_21"}, {"t": "案例代码：555 多谐振荡器参数计算与波形模拟", "c": "数字电子技术", "u": "01-digital.html#555"}, {"t": "扩展知识点", "c": "数字电子技术", "u": "01-digital.html#_22"}, {"t": "扩展一：脉动阵列的数字实现", "c": "数字电子技术", "u": "01-digital.html#_23"}, {"t": "扩展二：异步电路与亚稳态", "c": "数字电子技术", "u": "01-digital.html#_24"}, {"t": "扩展三：低功耗设计与时钟门控", "c": "数字电子技术", "u": "01-digital.html#_25"}, {"t": "其他扩展方向清单", "c": "数字电子技术", "u": "01-digital.html#_26"}, {"t": "练习与思考题", "c": "数字电子技术", "u": "01-digital.html#_27"}, {"t": "参考资料", "c": "数字电子技术", "u": "01-digital.html#_28"}, {"t": "0. AI 时代为什么还要学模电", "c": "模拟电子技术", "u": "02-analog.html#0-ai"}, {"t": "1. 半导体基础与 PN 结", "c": "模拟电子技术", "u": "02-analog.html#1-pn"}, {"t": "知识要点", "c": "模拟电子技术", "u": "02-analog.html#_2"}, {"t": "关键概念精讲", "c": "模拟电子技术", "u": "02-analog.html#_3"}, {"t": "案例代码：二极管工作点求解", "c": "模拟电子技术", "u": "02-analog.html#_4"}, {"t": "2. 二极管及其应用", "c": "模拟电子技术", "u": "02-analog.html#2"}, {"t": "知识要点", "c": "模拟电子技术", "u": "02-analog.html#_5"}, {"t": "关键概念精讲", "c": "模拟电子技术", "u": "02-analog.html#_6"}, {"t": "案例代码：整流滤波时域仿真", "c": "模拟电子技术", "u": "02-analog.html#_7"}, {"t": "3. 双极型晶体管 BJT", "c": "模拟电子技术", "u": "02-analog.html#3-bjt"}, {"t": "知识要点", "c": "模拟电子技术", "u": "02-analog.html#_8"}, {"t": "关键概念精讲", "c": "模拟电子技术", "u": "02-analog.html#_9"}, {"t": "案例代码：BJT 静态工作点与增益", "c": "模拟电子技术", "u": "02-analog.html#bjt"}, {"t": "4. 场效应管 MOSFET", "c": "模拟电子技术", "u": "02-analog.html#4-mosfet"}, {"t": "知识要点", "c": "模拟电子技术", "u": "02-analog.html#_10"}, {"t": "关键概念精讲", "c": "模拟电子技术", "u": "02-analog.html#_11"}, {"t": "案例代码：MOSFET 共源放大器", "c": "模拟电子技术", "u": "02-analog.html#mosfet"}, {"t": "5. 放大电路的频率响应", "c": "模拟电子技术", "u": "02-analog.html#5"}, {"t": "知识要点", "c": "模拟电子技术", "u": "02-analog.html#_12"}, {"t": "关键概念精讲", "c": "模拟电子技术", "u": "02-analog.html#_13"}, {"t": "案例代码：波特图与米勒效应", "c": "模拟电子技术", "u": "02-analog.html#_14"}, {"t": "6. 负反馈放大电路", "c": "模拟电子技术", "u": "02-analog.html#6"}, {"t": "知识要点", "c": "模拟电子技术", "u": "02-analog.html#_15"}, {"t": "关键概念精讲", "c": "模拟电子技术", "u": "02-analog.html#_16"}, {"t": "案例代码：反馈深度与相位裕度", "c": "模拟电子技术", "u": "02-analog.html#_17"}, {"t": "7. 集成运放及线性应用", "c": "模拟电子技术", "u": "02-analog.html#7"}, {"t": "知识要点", "c": "模拟电子技术", "u": "02-analog.html#_18"}, {"t": "关键概念精讲", "c": "模拟电子技术", "u": "02-analog.html#_19"}, {"t": "案例代码：运放电路计算器", "c": "模拟电子技术", "u": "02-analog.html#_20"}, {"t": "8. 运放非线性应用与有源滤波器", "c": "模拟电子技术", "u": "02-analog.html#8"}, {"t": "知识要点", "c": "模拟电子技术", "u": "02-analog.html#_21"}, {"t": "关键概念精讲", "c": "模拟电子技术", "u": "02-analog.html#_22"}, {"t": "案例代码：Sallen-Key 有源滤波器设计", "c": "模拟电子技术", "u": "02-analog.html#sallen-key"}, {"t": "9. 功率放大与直流稳压电源", "c": "模拟电子技术", "u": "02-analog.html#9"}, {"t": "知识要点", "c": "模拟电子技术", "u": "02-analog.html#_23"}, {"t": "关键概念精讲", "c": "模拟电子技术", "u": "02-analog.html#_24"}, {"t": "案例代码：OCL 效率与电源设计", "c": "模拟电子技术", "u": "02-analog.html#ocl"}, {"t": "附：SPICE 网表示例", "c": "模拟电子技术", "u": "02-analog.html#spice"}, {"t": "扩展知识点", "c": "模拟电子技术", "u": "02-analog.html#_25"}, {"t": "扩展一：模拟存内计算——用欧姆定律做矩阵乘法", "c": "模拟电子技术", "u": "02-analog.html#_26"}, {"t": "扩展二：开关电源 DC-DC 原理——Buck 变换器", "c": "模拟电子技术", "u": "02-analog.html#dc-dc-buck"}, {"t": "扩展三：锁相环 PLL——用负反馈锁住频率与相位", "c": "模拟电子技术", "u": "02-analog.html#pll"}, {"t": "更多方向（待扩展清单）", "c": "模拟电子技术", "u": "02-analog.html#_27"}, {"t": "练习与思考题", "c": "模拟电子技术", "u": "02-analog.html#_28"}, {"t": "参考资料", "c": "模拟电子技术", "u": "02-analog.html#_29"}, {"t": "0. AI 时代为什么还要学计组", "c": "计算机组成原理", "u": "03-organization.html#0-ai"}, {"t": "1. 计算机系统概述", "c": "计算机组成原理", "u": "03-organization.html#1"}, {"t": "知识要点", "c": "计算机组成原理", "u": "03-organization.html#_2"}, {"t": "关键概念精讲", "c": "计算机组成原理", "u": "03-organization.html#_3"}, {"t": "案例代码：性能公式计算器", "c": "计算机组成原理", "u": "03-organization.html#_4"}, {"t": "2. 数据的表示", "c": "计算机组成原理", "u": "03-organization.html#2"}, {"t": "知识要点", "c": "计算机组成原理", "u": "03-organization.html#_5"}, {"t": "关键概念精讲", "c": "计算机组成原理", "u": "03-organization.html#_6"}, {"t": "案例代码：补码运算与位级验算", "c": "计算机组成原理", "u": "03-organization.html#_7"}, {"t": "3. 运算方法与 ALU", "c": "计算机组成原理", "u": "03-organization.html#3-alu"}, {"t": "知识要点", "c": "计算机组成原理", "u": "03-organization.html#_8"}, {"t": "关键概念精讲", "c": "计算机组成原理", "u": "03-organization.html#_9"}, {"t": "案例代码：一个能跑的 ALU", "c": "计算机组成原理", "u": "03-organization.html#alu"}, {"t": "4. 存储系统", "c": "计算机组成原理", "u": "03-organization.html#4"}, {"t": "知识要点", "c": "计算机组成原理", "u": "03-organization.html#_10"}, {"t": "关键概念精讲", "c": "计算机组成原理", "u": "03-organization.html#_11"}, {"t": "案例代码：地址拆分与命中率", "c": "计算机组成原理", "u": "03-organization.html#_12"}, {"t": "5. 指令系统", "c": "计算机组成原理", "u": "03-organization.html#5"}, {"t": "知识要点", "c": "计算机组成原理", "u": "03-organization.html#_13"}, {"t": "关键概念精讲", "c": "计算机组成原理", "u": "03-organization.html#_14"}, {"t": "案例代码：RISC-V 指令编解码", "c": "计算机组成原理", "u": "03-organization.html#risc-v"}, {"t": "6. CPU 结构与数据通路", "c": "计算机组成原理", "u": "03-organization.html#6-cpu"}, {"t": "知识要点", "c": "计算机组成原理", "u": "03-organization.html#_15"}, {"t": "关键概念精讲", "c": "计算机组成原理", "u": "03-organization.html#_16"}, {"t": "案例代码：玩具 CPU 单周期模拟器（招牌案例）", "c": "计算机组成原理", "u": "03-organization.html#cpu"}, {"t": "7. 流水线", "c": "计算机组成原理", "u": "03-organization.html#7"}, {"t": "知识要点", "c": "计算机组成原理", "u": "03-organization.html#_17"}, {"t": "关键概念精讲", "c": "计算机组成原理", "u": "03-organization.html#_18"}, {"t": "案例代码：五级流水线时空图", "c": "计算机组成原理", "u": "03-organization.html#_19"}, {"t": "8. 总线与输入输出", "c": "计算机组成原理", "u": "03-organization.html#8"}, {"t": "知识要点", "c": "计算机组成原理", "u": "03-organization.html#_20"}, {"t": "关键概念精讲", "c": "计算机组成原理", "u": "03-organization.html#_21"}, {"t": "案例代码：三种 I/O 方式的 CPU 占用率", "c": "计算机组成原理", "u": "03-organization.html#io-cpu"}, {"t": "9. 多处理器与并行体系结构初步", "c": "计算机组成原理", "u": "03-organization.html#9"}, {"t": "知识要点", "c": "计算机组成原理", "u": "03-organization.html#_22"}, {"t": "关键概念精讲", "c": "计算机组成原理", "u": "03-organization.html#_23"}, {"t": "案例代码：MESI 状态机与伪共享", "c": "计算机组成原理", "u": "03-organization.html#mesi"}, {"t": "扩展知识点", "c": "计算机组成原理", "u": "03-organization.html#_24"}, {"t": "深入一：RISC-V 指令集详解与自制 CPU 路线", "c": "计算机组成原理", "u": "03-organization.html#risc-v-cpu"}, {"t": "深入二：虚拟存储与 TLB 地址翻译全流程", "c": "计算机组成原理", "u": "03-organization.html#tlb"}, {"t": "深入三：DRAM/HBM 内部结构与内存墙", "c": "计算机组成原理", "u": "03-organization.html#dramhbm"}, {"t": "练习与思考题", "c": "计算机组成原理", "u": "03-organization.html#_25"}, {"t": "参考资料", "c": "计算机组成原理", "u": "03-organization.html#_26"}, {"t": "0. AI 时代为什么还要学体系结构", "c": "计算机体系结构", "u": "04-architecture.html#0-ai"}, {"t": "1. 量化设计基础：性能公式、Amdahl 定律与能耗", "c": "计算机体系结构", "u": "04-architecture.html#1-amdahl"}, {"t": "知识要点", "c": "计算机体系结构", "u": "04-architecture.html#_2"}, {"t": "关键概念精讲", "c": "计算机体系结构", "u": "04-architecture.html#_3"}, {"t": "案例代码", "c": "计算机体系结构", "u": "04-architecture.html#_4"}, {"t": "2. 指令级并行 ILP：动态调度与寄存器重命名", "c": "计算机体系结构", "u": "04-architecture.html#2-ilp"}, {"t": "知识要点", "c": "计算机体系结构", "u": "04-architecture.html#_5"}, {"t": "关键概念精讲", "c": "计算机体系结构", "u": "04-architecture.html#_6"}, {"t": "Tomasulo 算法详解", "c": "计算机体系结构", "u": "04-architecture.html#tomasulo"}, {"t": "寄存器重命名深入：从 RAT 到物理寄存器堆", "c": "计算机体系结构", "u": "04-architecture.html#rat"}, {"t": "案例代码一：寄存器重命名模拟", "c": "计算机体系结构", "u": "04-architecture.html#_11"}, {"t": "案例代码二：Tomasulo 模拟器", "c": "计算机体系结构", "u": "04-architecture.html#tomasulo_2"}, {"t": "案例代码三：转发能救回多少停顿", "c": "计算机体系结构", "u": "04-architecture.html#_12"}, {"t": "3. 分支预测", "c": "计算机体系结构", "u": "04-architecture.html#3"}, {"t": "知识要点", "c": "计算机体系结构", "u": "04-architecture.html#_13"}, {"t": "关键概念精讲", "c": "计算机体系结构", "u": "04-architecture.html#_14"}, {"t": "案例代码", "c": "计算机体系结构", "u": "04-architecture.html#_15"}, {"t": "4. 超标量与乱序执行：ROB 与推测执行", "c": "计算机体系结构", "u": "04-architecture.html#4-rob"}, {"t": "知识要点", "c": "计算机体系结构", "u": "04-architecture.html#_16"}, {"t": "关键概念精讲", "c": "计算机体系结构", "u": "04-architecture.html#_17"}, {"t": "现代乱序核的完整流水线", "c": "计算机体系结构", "u": "04-architecture.html#_18"}, {"t": "ROB 表项结构与按序提交", "c": "计算机体系结构", "u": "04-architecture.html#rob"}, {"t": "案例代码一：ROB 与误预测回滚", "c": "计算机体系结构", "u": "04-architecture.html#rob_1"}, {"t": "案例代码二：精确异常", "c": "计算机体系结构", "u": "04-architecture.html#_19"}, {"t": "案例代码三：顺序 vs 乱序", "c": "计算机体系结构", "u": "04-architecture.html#vs"}, {"t": "5. Cache 进阶与存储墙", "c": "计算机体系结构", "u": "04-architecture.html#5-cache"}, {"t": "知识要点", "c": "计算机体系结构", "u": "04-architecture.html#_20"}, {"t": "关键概念精讲", "c": "计算机体系结构", "u": "04-architecture.html#_21"}, {"t": "案例代码", "c": "计算机体系结构", "u": "04-architecture.html#_22"}, {"t": "6. 数据级并行 DLP：SIMD、向量机与 GPU 的 SIMT", "c": "计算机体系结构", "u": "04-architecture.html#6-dlpsimd-gpu-simt"}, {"t": "知识要点", "c": "计算机体系结构", "u": "04-architecture.html#_23"}, {"t": "关键概念精讲", "c": "计算机体系结构", "u": "04-architecture.html#_24"}, {"t": "案例代码", "c": "计算机体系结构", "u": "04-architecture.html#_25"}, {"t": "7. 线程级并行 TLP：多核、MESI 与存储一致性", "c": "计算机体系结构", "u": "04-architecture.html#7-tlpmesi"}, {"t": "知识要点", "c": "计算机体系结构", "u": "04-architecture.html#_26"}, {"t": "关键概念精讲", "c": "计算机体系结构", "u": "04-architecture.html#_27"}, {"t": "案例代码", "c": "计算机体系结构", "u": "04-architecture.html#_28"}, {"t": "8. 领域专用架构 DSA：TPU 与脉动阵列", "c": "计算机体系结构", "u": "04-architecture.html#8-dsatpu"}, {"t": "知识要点", "c": "计算机体系结构", "u": "04-architecture.html#_29"}, {"t": "关键概念精讲", "c": "计算机体系结构", "u": "04-architecture.html#_30"}, {"t": "案例代码（招牌案例）", "c": "计算机体系结构", "u": "04-architecture.html#_31"}, {"t": "9. 互连与 Chiplet", "c": "计算机体系结构", "u": "04-architecture.html#9-chiplet"}, {"t": "知识要点", "c": "计算机体系结构", "u": "04-architecture.html#_32"}, {"t": "关键概念精讲", "c": "计算机体系结构", "u": "04-architecture.html#_33"}, {"t": "案例代码", "c": "计算机体系结构", "u": "04-architecture.html#_34"}, {"t": "扩展知识点", "c": "计算机体系结构", "u": "04-architecture.html#_35"}, {"t": "扩展一：Roofline 性能建模实战", "c": "计算机体系结构", "u": "04-architecture.html#roofline"}, {"t": "扩展二：GPU 架构与 SIMT 执行模型深入", "c": "计算机体系结构", "u": "04-architecture.html#gpu-simt"}, {"t": "扩展三：存内计算 PIM 与 CXL 内存解耦", "c": "计算机体系结构", "u": "04-architecture.html#pim-cxl"}, {"t": "其余自学清单", "c": "计算机体系结构", "u": "04-architecture.html#_44"}, {"t": "练习与思考题", "c": "计算机体系结构", "u": "04-architecture.html#_45"}, {"t": "参考资料", "c": "计算机体系结构", "u": "04-architecture.html#_46"}, {"t": "0. AI 时代为什么还要学数据结构", "c": "数据结构", "u": "05-data-structures.html#0-ai"}, {"t": "1. 绪论与复杂度分析", "c": "数据结构", "u": "05-data-structures.html#1"}, {"t": "知识要点", "c": "数据结构", "u": "05-data-structures.html#_2"}, {"t": "关键概念精讲", "c": "数据结构", "u": "05-data-structures.html#_3"}, {"t": "案例代码：复杂度实测", "c": "数据结构", "u": "05-data-structures.html#_4"}, {"t": "2. 线性表", "c": "数据结构", "u": "05-data-structures.html#2"}, {"t": "知识要点", "c": "数据结构", "u": "05-data-structures.html#_5"}, {"t": "关键概念精讲", "c": "数据结构", "u": "05-data-structures.html#_6"}, {"t": "案例代码：链表经典操作", "c": "数据结构", "u": "05-data-structures.html#_7"}, {"t": "C 版本对照", "c": "数据结构", "u": "05-data-structures.html#c"}, {"t": "招牌案例：LRU 缓存 = 哈希表 + 双向链表", "c": "数据结构", "u": "05-data-structures.html#lru"}, {"t": "3. 栈与队列", "c": "数据结构", "u": "05-data-structures.html#3"}, {"t": "知识要点", "c": "数据结构", "u": "05-data-structures.html#_8"}, {"t": "关键概念精讲", "c": "数据结构", "u": "05-data-structures.html#_9"}, {"t": "案例代码：括号匹配 + 表达式求值 + 单调栈", "c": "数据结构", "u": "05-data-structures.html#_10"}, {"t": "4. 串与数组", "c": "数据结构", "u": "05-data-structures.html#4"}, {"t": "知识要点", "c": "数据结构", "u": "05-data-structures.html#_11"}, {"t": "关键概念精讲", "c": "数据结构", "u": "05-data-structures.html#_12"}, {"t": "案例代码：KMP + 稀疏矩阵", "c": "数据结构", "u": "05-data-structures.html#kmp"}, {"t": "5. 树与二叉树", "c": "数据结构", "u": "05-data-structures.html#5"}, {"t": "知识要点", "c": "数据结构", "u": "05-data-structures.html#_13"}, {"t": "关键概念精讲", "c": "数据结构", "u": "05-data-structures.html#_14"}, {"t": "案例代码：遍历 + 哈夫曼编码", "c": "数据结构", "u": "05-data-structures.html#_15"}, {"t": "6. 二叉搜索树与平衡树", "c": "数据结构", "u": "05-data-structures.html#6"}, {"t": "知识要点", "c": "数据结构", "u": "05-data-structures.html#_16"}, {"t": "关键概念精讲", "c": "数据结构", "u": "05-data-structures.html#_17"}, {"t": "案例代码：AVL 旋转与平衡插入", "c": "数据结构", "u": "05-data-structures.html#avl"}, {"t": "7. 堆与优先队列", "c": "数据结构", "u": "05-data-structures.html#7"}, {"t": "知识要点", "c": "数据结构", "u": "05-data-structures.html#_18"}, {"t": "关键概念精讲", "c": "数据结构", "u": "05-data-structures.html#_19"}, {"t": "案例代码：TopK 与优先队列调度", "c": "数据结构", "u": "05-data-structures.html#topk"}, {"t": "8. 图", "c": "数据结构", "u": "05-data-structures.html#8"}, {"t": "知识要点", "c": "数据结构", "u": "05-data-structures.html#_20"}, {"t": "关键概念精讲", "c": "数据结构", "u": "05-data-structures.html#_21"}, {"t": "案例代码：BFS/DFS/拓扑排序/关键路径", "c": "数据结构", "u": "05-data-structures.html#bfsdfs"}, {"t": "9. 查找与哈希", "c": "数据结构", "u": "05-data-structures.html#9"}, {"t": "知识要点", "c": "数据结构", "u": "05-data-structures.html#_22"}, {"t": "关键概念精讲", "c": "数据结构", "u": "05-data-structures.html#_23"}, {"t": "案例代码：二分查找 + 布隆过滤器", "c": "数据结构", "u": "05-data-structures.html#_24"}, {"t": "C 版本对照", "c": "数据结构", "u": "05-data-structures.html#c_1"}, {"t": "扩展知识点", "c": "数据结构", "u": "05-data-structures.html#_25"}, {"t": "扩展一：跳表 Skip List——用抛硬币代替旋转", "c": "数据结构", "u": "05-data-structures.html#skip-list"}, {"t": "扩展二：LSM-Tree——把随机写变成顺序写", "c": "数据结构", "u": "05-data-structures.html#lsm-tree"}, {"t": "扩展三：HNSW——向量检索的分层小世界图", "c": "数据结构", "u": "05-data-structures.html#hnsw"}, {"t": "练习与思考题", "c": "数据结构", "u": "05-data-structures.html#_26"}, {"t": "参考资料", "c": "数据结构", "u": "05-data-structures.html#_27"}, {"t": "0. AI 时代为什么还要学算法", "c": "算法设计与分析", "u": "06-algorithms.html#0-ai"}, {"t": "1. 算法分析基础", "c": "算法设计与分析", "u": "06-algorithms.html#1"}, {"t": "知识要点", "c": "算法设计与分析", "u": "06-algorithms.html#_2"}, {"t": "关键概念精讲", "c": "算法设计与分析", "u": "06-algorithms.html#_3"}, {"t": "案例代码：二分查找与增长率实测", "c": "算法设计与分析", "u": "06-algorithms.html#_4"}, {"t": "2. 分治策略", "c": "算法设计与分析", "u": "06-algorithms.html#2"}, {"t": "知识要点", "c": "算法设计与分析", "u": "06-algorithms.html#_5"}, {"t": "关键概念精讲", "c": "算法设计与分析", "u": "06-algorithms.html#_6"}, {"t": "案例代码：最近点对与快速幂", "c": "算法设计与分析", "u": "06-algorithms.html#_7"}, {"t": "3. 排序算法全景", "c": "算法设计与分析", "u": "06-algorithms.html#3"}, {"t": "知识要点", "c": "算法设计与分析", "u": "06-algorithms.html#_8"}, {"t": "关键概念精讲", "c": "算法设计与分析", "u": "06-algorithms.html#_9"}, {"t": "案例代码：三路快排与性能实测", "c": "算法设计与分析", "u": "06-algorithms.html#_10"}, {"t": "4. 贪心算法", "c": "算法设计与分析", "u": "06-algorithms.html#4"}, {"t": "知识要点", "c": "算法设计与分析", "u": "06-algorithms.html#_11"}, {"t": "关键概念精讲", "c": "算法设计与分析", "u": "06-algorithms.html#_12"}, {"t": "案例代码：区间调度与哈夫曼编码", "c": "算法设计与分析", "u": "06-algorithms.html#_13"}, {"t": "5. 动态规划", "c": "算法设计与分析", "u": "06-algorithms.html#5"}, {"t": "知识要点", "c": "算法设计与分析", "u": "06-algorithms.html#_14"}, {"t": "关键概念精讲", "c": "算法设计与分析", "u": "06-algorithms.html#_15"}, {"t": "案例代码：编辑距离（DP 表逐行打印）", "c": "算法设计与分析", "u": "06-algorithms.html#dp"}, {"t": "6. 图算法", "c": "算法设计与分析", "u": "06-algorithms.html#6"}, {"t": "知识要点", "c": "算法设计与分析", "u": "06-algorithms.html#_16"}, {"t": "关键概念精讲", "c": "算法设计与分析", "u": "06-algorithms.html#_17"}, {"t": "案例代码：Dijkstra 逐步松弛", "c": "算法设计与分析", "u": "06-algorithms.html#dijkstra"}, {"t": "7. 回溯与分支限界", "c": "算法设计与分析", "u": "06-algorithms.html#7"}, {"t": "知识要点", "c": "算法设计与分析", "u": "06-algorithms.html#_18"}, {"t": "关键概念精讲", "c": "算法设计与分析", "u": "06-algorithms.html#_19"}, {"t": "案例代码：N 皇后", "c": "算法设计与分析", "u": "06-algorithms.html#n"}, {"t": "8. 字符串算法", "c": "算法设计与分析", "u": "06-algorithms.html#8"}, {"t": "知识要点", "c": "算法设计与分析", "u": "06-algorithms.html#_20"}, {"t": "关键概念精讲", "c": "算法设计与分析", "u": "06-algorithms.html#_21"}, {"t": "案例代码：KMP 与 Trie", "c": "算法设计与分析", "u": "06-algorithms.html#kmp-trie"}, {"t": "9. NP 完全性与近似算法", "c": "算法设计与分析", "u": "06-algorithms.html#9-np"}, {"t": "知识要点", "c": "算法设计与分析", "u": "06-algorithms.html#_22"}, {"t": "关键概念精讲", "c": "算法设计与分析", "u": "06-algorithms.html#_23"}, {"t": "案例代码：TSP 启发式与顶点覆盖近似", "c": "算法设计与分析", "u": "06-algorithms.html#tsp"}, {"t": "扩展知识点", "c": "算法设计与分析", "u": "06-algorithms.html#_24"}, {"t": "线段树与区间查询", "c": "算法设计与分析", "u": "06-algorithms.html#_25"}, {"t": "网络流：最大流与最小割", "c": "算法设计与分析", "u": "06-algorithms.html#_26"}, {"t": "算法在 LLM 推理中的应用：KV-Cache、Beam Search 与投机解码", "c": "算法设计与分析", "u": "06-algorithms.html#llm-kv-cachebeam-search"}, {"t": "练习与思考题", "c": "算法设计与分析", "u": "06-algorithms.html#_27"}, {"t": "参考资料", "c": "算法设计与分析", "u": "06-algorithms.html#_28"}, {"t": "0. AI 时代为什么还要学操作系统", "c": "操作系统", "u": "07-os.html#0-ai"}, {"t": "1. 操作系统概述", "c": "操作系统", "u": "07-os.html#1"}, {"t": "知识要点", "c": "操作系统", "u": "07-os.html#_2"}, {"t": "关键概念精讲", "c": "操作系统", "u": "07-os.html#_3"}, {"t": "案例代码：观察系统调用与切换开销", "c": "操作系统", "u": "07-os.html#_4"}, {"t": "2. 进程与线程", "c": "操作系统", "u": "07-os.html#2"}, {"t": "知识要点", "c": "操作系统", "u": "07-os.html#_5"}, {"t": "关键概念精讲", "c": "操作系统", "u": "07-os.html#_6"}, {"t": "案例代码：GIL 下线程对 CPU 密集与 I/O 密集任务的差异", "c": "操作系统", "u": "07-os.html#gil-cpu-io"}, {"t": "3. CPU 调度", "c": "操作系统", "u": "07-os.html#3-cpu"}, {"t": "知识要点", "c": "操作系统", "u": "07-os.html#_7"}, {"t": "关键概念精讲", "c": "操作系统", "u": "07-os.html#_8"}, {"t": "案例代码：FCFS / SJF / RR 三种调度的周转与等待时间对比", "c": "操作系统", "u": "07-os.html#fcfs-sjf-rr"}, {"t": "4. 进程同步与互斥", "c": "操作系统", "u": "07-os.html#4"}, {"t": "知识要点", "c": "操作系统", "u": "07-os.html#_9"}, {"t": "关键概念精讲", "c": "操作系统", "u": "07-os.html#_10"}, {"t": "案例代码：竞争条件复现与加锁修复", "c": "操作系统", "u": "07-os.html#_11"}, {"t": "5. 死锁", "c": "操作系统", "u": "07-os.html#5"}, {"t": "知识要点", "c": "操作系统", "u": "07-os.html#_12"}, {"t": "关键概念精讲", "c": "操作系统", "u": "07-os.html#_13"}, {"t": "案例代码：银行家算法安全性检查（精简版）", "c": "操作系统", "u": "07-os.html#_14"}, {"t": "6. 内存管理", "c": "操作系统", "u": "07-os.html#6"}, {"t": "知识要点", "c": "操作系统", "u": "07-os.html#_15"}, {"t": "关键概念精讲", "c": "操作系统", "u": "07-os.html#_16"}, {"t": "案例代码：分页地址翻译模拟（含 TLB）", "c": "操作系统", "u": "07-os.html#tlb"}, {"t": "7. 虚拟内存与页面置换", "c": "操作系统", "u": "07-os.html#7"}, {"t": "知识要点", "c": "操作系统", "u": "07-os.html#_17"}, {"t": "关键概念精讲", "c": "操作系统", "u": "07-os.html#_18"}, {"t": "案例代码：FIFO 与 LRU 缺页对比 + Belady 异常复现", "c": "操作系统", "u": "07-os.html#fifo-lru-belady"}, {"t": "8. 文件系统", "c": "操作系统", "u": "07-os.html#8"}, {"t": "知识要点", "c": "操作系统", "u": "07-os.html#_19"}, {"t": "关键概念精讲", "c": "操作系统", "u": "07-os.html#_20"}, {"t": "案例代码：磁盘调度 FCFS / SSTF / SCAN 寻道距离对比", "c": "操作系统", "u": "07-os.html#fcfs-sstf-scan"}, {"t": "9. I/O 与设备管理", "c": "操作系统", "u": "07-os.html#9-io"}, {"t": "知识要点", "c": "操作系统", "u": "07-os.html#_21"}, {"t": "关键概念精讲", "c": "操作系统", "u": "07-os.html#_22"}, {"t": "案例代码：用户态缓冲的威力——缓冲写 vs 直通系统调用写", "c": "操作系统", "u": "07-os.html#vs"}, {"t": "扩展知识点", "c": "操作系统", "u": "07-os.html#_23"}, {"t": "容器与命名空间、cgroups", "c": "操作系统", "u": "07-os.html#cgroups"}, {"t": "GPU 显存管理与统一内存", "c": "操作系统", "u": "07-os.html#gpu"}, {"t": "PagedAttention 与 vLLM 的分页思想", "c": "操作系统", "u": "07-os.html#pagedattention-vllm"}, {"t": "练习与思考题", "c": "操作系统", "u": "07-os.html#_24"}, {"t": "参考资料", "c": "操作系统", "u": "07-os.html#_25"}];
+var srSel = 0, srItems = [];
+function openSearch() {
+  document.getElementById('searchMask').classList.add('open');
+  var i = document.getElementById('searchInput');
+  i.value = ''; i.focus(); renderSR('');
+}
+function closeSearch() { document.getElementById('searchMask').classList.remove('open'); }
+function renderSR(q) {
+  var box = document.getElementById('searchResults');
+  q = q.trim().toLowerCase();
+  if (!q) {
+    box.innerHTML = '<div class="sr-tip">输入关键词检索全部课程章节 · \u2191\u2193 选择 · Enter 跳转 · Esc 关闭</div>';
+    srItems = []; return;
+  }
+  var hits = SEARCH_IDX.filter(function (r) {
+    return r.t.toLowerCase().indexOf(q) >= 0 || r.c.toLowerCase().indexOf(q) >= 0;
+  }).slice(0, 40);
+  if (!hits.length) { box.innerHTML = '<div class="empty">没有找到匹配的章节</div>'; srItems = []; return; }
+  box.innerHTML = hits.map(function (r, i) {
+    return '<a class="sr' + (i === 0 ? ' sel' : '') + '" href="' + r.u + '">' +
+      '<div class="t">' + r.t + '</div><div class="c">' + r.c + '</div></a>';
+  }).join('');
+  srSel = 0; srItems = box.querySelectorAll('.sr');
+}
+document.addEventListener('keydown', function (e) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); openSearch(); return; }
+  var mask = document.getElementById('searchMask');
+  if (!mask || !mask.classList.contains('open')) return;
+  if (e.key === 'Escape') { closeSearch(); }
+  else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (!srItems.length) return;
+    srItems[srSel].classList.remove('sel');
+    srSel = (srSel + (e.key === 'ArrowDown' ? 1 : srItems.length - 1)) % srItems.length;
+    srItems[srSel].classList.add('sel');
+    srItems[srSel].scrollIntoView({ block: 'nearest' });
+  } else if (e.key === 'Enter') {
+    if (srItems.length) { e.preventDefault(); location.href = srItems[srSel].getAttribute('href'); }
+  }
+});
+
+// ===== 代码复制 / 运行 =====
+function copyCode(btn) {
+  var pre = btn.closest('.codewrap').querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText).then(function () {
+    var o = btn.textContent; btn.textContent = '\u2713 已复制';
+    setTimeout(function () { btn.textContent = o; }, 1500);
+  });
+}
+var pyodideReady = null;
+function loadPyodideOnce(statusCb) {
+  if (pyodideReady) return pyodideReady;
+  statusCb('正在加载 Python 运行时（首次约 10 秒）...');
+  pyodideReady = new Promise(function (resolve, reject) {
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js';
+    s.onload = function () {
+      loadPyodide({ indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/' })
+        .then(resolve).catch(reject);
+    };
+    s.onerror = function () { reject(new Error('Pyodide 加载失败，请检查网络连接')); };
+    document.head.appendChild(s);
+  });
+  return pyodideReady;
+}
+function runCode(btn, slow) {
+  var wrap = btn.closest('.codewrap');
+  // 输出区是 .codewrap 的直接兄弟节点，必须按相邻关系取，
+  // 不能用 parentNode.querySelector（那样所有代码块都会写进页面第一个输出区）
+  var out = wrap.nextElementSibling;
+  if (!out || !out.classList.contains('run-out')) return;
+  if (slow && !btn.dataset.confirmed) {
+    if (!confirm('这段代码包含性能测试或大规模循环。\n' +
+                 '浏览器内的 Python 比本地慢数倍，运行期间页面会暂时无响应。\n\n仍要运行吗？')) return;
+    btn.dataset.confirmed = '1';
+  }
+  var code = wrap.querySelector('pre').innerText;
+  out.classList.add('show'); out.classList.remove('err');
+  var setTxt = function (t) { out.textContent = t; };
+  btn.disabled = true;
+  loadPyodideOnce(setTxt).then(function (py) {
+    setTxt('运行中 ...');
+    var buf = [];
+    py.setStdout({ batched: function (s) { buf.push(s); } });
+    py.setStderr({ batched: function (s) { buf.push(s); } });
+    // 让出一帧，确保"运行中"先渲染出来再进入同步执行
+    setTimeout(function () {
+      try {
+        py.runPython(code);
+        out.textContent = buf.join('\n') || '(无输出，程序正常结束)';
+      } catch (err) {
+        out.classList.add('err');
+        out.textContent = (buf.length ? buf.join('\n') + '\n' : '') + String(err.message || err);
+      }
+      btn.disabled = false;
+    }, 30);
+  }).catch(function (e) {
+    out.classList.add('err'); setTxt(String(e.message || e)); btn.disabled = false;
+  });
+}
+
+// ===== 阅读进度 & 目录高亮 =====
+document.addEventListener('scroll', function () {
+  var h = document.documentElement;
+  var p = h.scrollTop / (h.scrollHeight - h.clientHeight || 1) * 100;
+  var bar = document.getElementById('progress');
+  if (bar) bar.style.width = p + '%';
+  var heads = document.querySelectorAll('.content h2, .content h3');
+  var cur = null;
+  for (var i = 0; i < heads.length; i++) {
+    if (heads[i].getBoundingClientRect().top < 120) cur = heads[i].id;
+  }
+  if (cur) {
+    document.querySelectorAll('.sidebar a').forEach(function (a) {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + cur);
+    });
+  }
+}, { passive: true });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default',
+      securityLevel: 'loose'
+    });
+  }
+</script>
+
+</body>
+</html>
